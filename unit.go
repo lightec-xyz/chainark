@@ -11,12 +11,12 @@ import (
 )
 
 type UnitCircuitPublicAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] interface {
-	New(currentID, nextID LinkedID[FR, G1El, G2El, GtEl]) (frontend.Circuit, error)
+	New(beginID, endID LinkageID) (frontend.Circuit, error)
 }
 
 type UnitProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	CurrentID LinkedID[FR, G1El, G2El, GtEl]
-	NextID    LinkedID[FR, G1El, G2El, GtEl]
+	BeginID LinkageID
+	EndID   LinkageID
 }
 
 func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
@@ -34,7 +34,7 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	}
 	api.AssertIsEqual(unitFpTest, 1)
 
-	assignment, err := unitAssignment.New(up.CurrentID, up.NextID)
+	assignment, err := unitAssignment.New(up.BeginID, up.EndID)
 	witness, err := createWitness[FR](assignment, field)
 	if err != nil {
 		return err

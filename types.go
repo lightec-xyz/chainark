@@ -8,29 +8,18 @@ import (
 	"github.com/consensys/gnark/std/recursion/plonk"
 )
 
-type LinkedID[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] interface {
-	IsEqual(api frontend.API, other *LinkedID[FR, G1El, G2El, GtEl]) (frontend.Variable, error)
+type LinkageID []uints.U8
 
-	ValueOfBytes(api frontend.API, bytes LinkedIDBytes) (*LinkedID[FR, G1El, G2El, GtEl], error)
+func (id *LinkageID) IsEqual(api frontend.API, other *LinkageID) frontend.Variable {
+	return testU8ArrayEquality(api, *id, *other)
 }
 
-type LinkedIDBytes []byte
+type LinkageIDBytes []byte
 
 type FingerPrint []uints.U8
 
 func (fp FingerPrint) IsEqual(api frontend.API, other FingerPrint) frontend.Variable {
-	len1 := len(fp)
-	len2 := len(other)
-	api.AssertIsEqual(len1, len2) // TODO correctness/forking review
-
-	sum := frontend.Variable(0)
-	for i := 0; i < len1; i++ {
-		cmp := api.Cmp(fp[i].Val, other[i].Val)
-		test := api.IsZero(cmp)
-		sum = api.Or(sum, test)
-	}
-
-	return api.IsZero(sum)
+	return testU8ArrayEquality(api, fp, other)
 }
 
 func FpValueOf(api frontend.API, v frontend.Variable) (FingerPrint, error) {
