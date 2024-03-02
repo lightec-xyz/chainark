@@ -54,7 +54,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		BeginID: c.RelayID,
 		EndID:   c.EndID,
 	}
-	return unit.Assert(api, verifier, c.FirstVKey, c.UnitFpBytes, c.FirstProof, c.unitAssignment, c.innerField)
+	return unit.Assert(api, verifier, c.SecondVKey, c.UnitFpBytes, c.SecondProof, c.unitAssignment, c.innerField)
 }
 
 type GenesisOrRecursiveCircuitPublicAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] interface {
