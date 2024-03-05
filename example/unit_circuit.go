@@ -22,6 +22,9 @@ import (
 )
 
 const IDLength = 32
+const unitPkeyFile = "unit.pkey"
+const unitVkeyFile = "unit.vkey"
+const unitProofFile = "unit.proof"
 
 type UnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
 	BeginID chainark.LinkageID `gnark:",public"`
@@ -81,14 +84,14 @@ func main() {
 			panic(err)
 		}
 
-		pkFile, err := os.Create("pkey")
+		pkFile, err := os.Create(unitPkeyFile)
 		if err != nil {
 			panic(err)
 		}
 		pk.WriteTo(pkFile)
 		pkFile.Close()
 
-		vkFile, err := os.Create("vkey")
+		vkFile, err := os.Create(unitVkeyFile)
 		if err != nil {
 			panic(err)
 		}
@@ -123,14 +126,14 @@ func main() {
 	pkey := plonk.NewProvingKey(ecc.BN254)
 	vkey := plonk.NewVerifyingKey(ecc.BN254)
 
-	pkFile, err := os.Open("pkey")
+	pkFile, err := os.Open(unitPkeyFile)
 	if err != nil {
 		panic(err)
 	}
 	pkey.ReadFrom(pkFile)
 	pkFile.Close()
 
-	vkFile, err := os.Open("vkey")
+	vkFile, err := os.Open(unitVkeyFile)
 	if err != nil {
 		panic(err)
 	}
@@ -149,7 +152,7 @@ func main() {
 		panic(err)
 	}
 
-	proofFile, err := os.Create("proof")
+	proofFile, err := os.Create(unitProofFile)
 	if err != nil {
 		panic(err)
 	}
