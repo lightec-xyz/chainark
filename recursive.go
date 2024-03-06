@@ -28,9 +28,8 @@ type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alg
 	GenesisIDBytes LinkageIDBytes
 
 	// some data field needs from outside
-	innerField     *big.Int
-	unitAssignment UnitCircuitPublicAssignment[FR, G1El, G2El, GtEl]
-	gOrRAssignment GenesisOrRecursiveCircuitPublicAssignment[FR, G1El, G2El, GtEl]
+	innerField  *big.Int
+	gOrRCircuit frontend.Circuit
 }
 
 func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
@@ -44,7 +43,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		BeginID: c.BeginID,
 		EndID:   c.RelayID,
 	}
-	err = gOrR.Assert(api, verifier, c.FirstVKey, c.AcceptableFirstFp, c.GenesisFpBytes, c.GenesisIDBytes, c.FirstProof, c.gOrRAssignment, c.innerField)
+	err = gOrR.Assert(api, verifier, c.FirstVKey, c.AcceptableFirstFp, c.GenesisFpBytes, c.GenesisIDBytes, c.FirstProof, c.gOrRCircuit, c.innerField)
 	if err != nil {
 		return err
 	}
@@ -54,11 +53,11 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		BeginID: c.RelayID,
 		EndID:   c.EndID,
 	}
-	return unit.Assert(api, verifier, c.SecondVKey, c.UnitFpBytes, c.SecondProof, c.unitAssignment, c.innerField)
+	return unit.Assert(api, verifier, c.SecondVKey, c.UnitFpBytes, c.SecondProof, c.innerField)
 }
 
 type GenesisOrRecursiveCircuitPublicAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] interface {
-	New(beginID, endID LinkageID) (frontend.Circuit, error)
+	New(beginID, endID LinkageID) frontend.Circuit
 }
 
 type GenesisOrRecursiveProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
@@ -74,7 +73,8 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	genesisFpBytes FingerPrintBytes,
 	genesisIdBytes LinkageIDBytes,
 	proof plonk.Proof[FR, G1El, G2El],
-	pubAssignment GenesisOrRecursiveCircuitPublicAssignment[FR, G1El, G2El, GtEl],
+	// pubAssignment GenesisOrRecursiveCircuitPublicAssignment[FR, G1El, G2El, GtEl],
+	gOrRCircuit frontend.Circuit,
 	field *big.Int) error {
 
 	// we only accept the verification key if either holds:
@@ -105,11 +105,8 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	api.AssertIsEqual(firstVkeyTest, 1)
 
 	// assemble the witness and assert the proof
-	assignment, err := pubAssignment.New(rp.BeginID, rp.EndID)
-	if err != nil {
-		return err
-	}
-	witness, err := createWitness[FR](assignment, field)
+	// assignment := pubAssignment.New(rp.BeginID, rp.EndID)
+	witness, err := createWitness[FR](gOrRCircuit, field)
 	if err != nil {
 		return err
 	}

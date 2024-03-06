@@ -8,6 +8,15 @@
 *.so
 *.dylib
 
+example/unit/unit
+example/genesis/genesis
+example/fp/fp
+
+# Generated data
+*.proof
+*.pkey
+*.vkey
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -19,3 +28,4 @@
 
 # Go workspace file
 go.work.sum
+.vscode

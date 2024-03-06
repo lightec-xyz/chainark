@@ -11,7 +11,7 @@ import (
 )
 
 type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	UnitVKey    plonk.VerifyingKey[FR, G1El, G2El]
+	UnitVKey    plonk.VerifyingKey[FR, G1El, G2El] // this could be constant, and provided during circuit compilation (avoid finger print?)
 	FirstProof  plonk.Proof[FR, G1El, G2El]
 	SecondProof plonk.Proof[FR, G1El, G2El]
 
@@ -26,8 +26,7 @@ type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 	GenesisIDBytes LinkageIDBytes
 
 	// some data field needs from outside
-	innerField     *big.Int
-	unitAssignment UnitCircuitPublicAssignment[FR, G1El, G2El, GtEl]
+	InnerField *big.Int
 }
 
 func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
@@ -44,7 +43,7 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		BeginID: c.GenesisID,
 		EndID:   c.FirstID,
 	}
-	unit1.Assert(api, verifier, c.UnitVKey, c.UnitFpBytes, c.FirstProof, c.unitAssignment, c.innerField)
+	err = unit1.Assert(api, verifier, c.UnitVKey, c.UnitFpBytes, c.FirstProof, c.InnerField)
 	if err != nil {
 		return err
 	}
@@ -55,5 +54,5 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		BeginID: c.FirstID,
 		EndID:   c.SecondID,
 	}
-	return unit2.Assert(api, verifier, c.UnitVKey, c.UnitFpBytes, c.SecondProof, c.unitAssignment, c.innerField)
+	return unit2.Assert(api, verifier, c.UnitVKey, c.UnitFpBytes, c.SecondProof, c.InnerField)
 }

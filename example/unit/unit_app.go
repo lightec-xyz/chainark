@@ -12,54 +12,24 @@ import (
 	cs "github.com/consensys/gnark/constraint/bn254"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/scs"
-	"github.com/consensys/gnark/std/algebra"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
-	sha256 "github.com/consensys/gnark/std/hash/sha2"
-	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/math/uints"
+	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 	"github.com/consensys/gnark/test/unsafekzg"
 	"github.com/lightec-xyz/chainark"
 )
 
-const IDLength = 32
-const unitPkeyFile = "unit.pkey"
-const unitVkeyFile = "unit.vkey"
-const unitProofFile = "unit.proof"
-
-type UnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	BeginID chainark.LinkageID `gnark:",public"`
-	EndID   chainark.LinkageID `gnark:",public"`
-}
-
-func (uc *UnitCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
-	s256, err := sha256.New(api)
-	if err != nil {
-		return err
-	}
-	s256.Write(uc.BeginID)
-	s256.Write(uints.NewU8Array(([]byte)("chainark example")))
-
-	r := (chainark.LinkageID)(s256.Sum())
-
-	idTest := uc.EndID.IsEqual(api, &r)
-	api.AssertIsEqual(idTest, 1)
-
-	return nil
-}
-
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("usage: ./example --setup")
-		fmt.Println("usage: ./example beginIdHex endIdHex")
+		fmt.Println("usage: ./unit --setup")
+		fmt.Println("usage: ./unit beginIdHex endIdHex")
 		return
 	}
 
-	// log := logger.Logger()
-
-	var circuit UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]
-	// note that we need to supply the actual length to the circuit, so mock some data just for the sake of circuit definition
-	circuit.BeginID = make([]uints.U8, 32)
-	circuit.EndID = make([]uints.U8, 32)
+	circuit := chainark.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
+		BeginID: make([]uints.U8, chainark.IDLength),
+		EndID:   make([]uints.U8, chainark.IDLength),
+	}
 
 	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit)
 	if err != nil {
@@ -84,14 +54,14 @@ func main() {
 			panic(err)
 		}
 
-		pkFile, err := os.Create(unitPkeyFile)
+		pkFile, err := os.Create(chainark.UnitPkeyFile)
 		if err != nil {
 			panic(err)
 		}
 		pk.WriteTo(pkFile)
 		pkFile.Close()
 
-		vkFile, err := os.Create(unitVkeyFile)
+		vkFile, err := os.Create(chainark.UnitVkeyFile)
 		if err != nil {
 			panic(err)
 		}
@@ -102,8 +72,8 @@ func main() {
 		return
 	}
 
-	if len(os.Args) < 3 || len(os.Args[1]) != 64 || len(os.Args[2]) != 64 {
-		fmt.Println("usage: ./example beginIdHex endIdHex\nNote that the Id is some value of SHA256, thus 32 bytes.")
+	if len(os.Args) < 3 || len(os.Args[1]) != chainark.IDLength*2 || len(os.Args[2]) != chainark.IDLength*2 {
+		fmt.Println("usage: ./unit beginIdHex endIdHex\nNote that the Id is some value of SHA256, thus 32 bytes.")
 		return
 	}
 
@@ -114,9 +84,10 @@ func main() {
 	hex.Decode(beginBytes, []byte(beginHex))
 	hex.Decode(endBytes, []byte(endHex))
 
-	var w UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]
-	w.BeginID = uints.NewU8Array(beginBytes)
-	w.EndID = uints.NewU8Array(endBytes)
+	w := chainark.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
+		BeginID: uints.NewU8Array(beginBytes),
+		EndID:   uints.NewU8Array(endBytes),
+	}
 	witness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	if err != nil {
 		panic(err)
@@ -126,14 +97,14 @@ func main() {
 	pkey := plonk.NewProvingKey(ecc.BN254)
 	vkey := plonk.NewVerifyingKey(ecc.BN254)
 
-	pkFile, err := os.Open(unitPkeyFile)
+	pkFile, err := os.Open(chainark.UnitPkeyFile)
 	if err != nil {
 		panic(err)
 	}
 	pkey.ReadFrom(pkFile)
 	pkFile.Close()
 
-	vkFile, err := os.Open(unitVkeyFile)
+	vkFile, err := os.Open(chainark.UnitVkeyFile)
 	if err != nil {
 		panic(err)
 	}
@@ -141,18 +112,20 @@ func main() {
 	vkFile.Close()
 
 	fmt.Println("proving ...")
-	proof, err := plonk.Prove(ccs, pkey, witness)
+	proof, err := plonk.Prove(ccs, pkey, witness,
+		recursive_plonk.GetNativeProverOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Println("verifying ...")
-	err = plonk.Verify(proof, vkey, witness)
+	err = plonk.Verify(proof, vkey, witness,
+		recursive_plonk.GetNativeVerifierOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
 	if err != nil {
 		panic(err)
 	}
 
-	proofFile, err := os.Create(unitProofFile)
+	proofFile, err := os.Create(chainark.UnitProofFile)
 	if err != nil {
 		panic(err)
 	}
