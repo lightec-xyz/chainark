@@ -13,10 +13,11 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/scs"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
-	"github.com/consensys/gnark/std/math/uints"
+	"github.com/consensys/gnark/std/math/emulated"
 	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 	"github.com/consensys/gnark/test/unsafekzg"
 	"github.com/lightec-xyz/chainark"
+	"github.com/lightec-xyz/chainark/example"
 )
 
 func main() {
@@ -26,9 +27,15 @@ func main() {
 		return
 	}
 
-	circuit := chainark.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: make([]uints.U8, chainark.IDLength),
-		EndID:   make([]uints.U8, chainark.IDLength),
+	circuit := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
+		BeginID: chainark.LinkageID[sw_bn254.ScalarField]{
+			Vals:           make([]emulated.Element[sw_bn254.ScalarField], example.IDLength),
+			BitsPerElement: example.LinkageIDBitsPerElement,
+		},
+		EndID: chainark.LinkageID[sw_bn254.ScalarField]{
+			Vals:           make([]emulated.Element[sw_bn254.ScalarField], example.IDLength),
+			BitsPerElement: example.LinkageIDBitsPerElement,
+		},
 	}
 
 	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit)
@@ -54,14 +61,14 @@ func main() {
 			panic(err)
 		}
 
-		pkFile, err := os.Create(chainark.UnitPkeyFile)
+		pkFile, err := os.Create(example.UnitPkeyFile)
 		if err != nil {
 			panic(err)
 		}
 		pk.WriteTo(pkFile)
 		pkFile.Close()
 
-		vkFile, err := os.Create(chainark.UnitVkeyFile)
+		vkFile, err := os.Create(example.UnitVkeyFile)
 		if err != nil {
 			panic(err)
 		}
@@ -72,7 +79,8 @@ func main() {
 		return
 	}
 
-	if len(os.Args) < 3 || len(os.Args[1]) != chainark.IDLength*2 || len(os.Args[2]) != chainark.IDLength*2 {
+	idHexLen := example.IDLength * example.LinkageIDBitsPerElement * 2 / 8
+	if len(os.Args) < 3 || len(os.Args[1]) != idHexLen || len(os.Args[2]) != idHexLen {
 		fmt.Println("usage: ./unit beginIdHex endIdHex\nNote that the Id is some value of SHA256, thus 32 bytes.")
 		return
 	}
@@ -84,11 +92,14 @@ func main() {
 	hex.Decode(beginBytes, []byte(beginHex))
 	hex.Decode(endBytes, []byte(endHex))
 
-	w := chainark.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: uints.NewU8Array(beginBytes),
-		EndID:   uints.NewU8Array(endBytes),
+	bId := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](beginBytes, example.LinkageIDBitsPerElement)
+	eId := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](endBytes, example.LinkageIDBitsPerElement)
+
+	w := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
+		BeginID: bId,
+		EndID:   eId,
 	}
-	witness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
+	witness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	if err != nil {
 		panic(err)
 	}
@@ -97,14 +108,14 @@ func main() {
 	pkey := plonk.NewProvingKey(ecc.BN254)
 	vkey := plonk.NewVerifyingKey(ecc.BN254)
 
-	pkFile, err := os.Open(chainark.UnitPkeyFile)
+	pkFile, err := os.Open(example.UnitPkeyFile)
 	if err != nil {
 		panic(err)
 	}
 	pkey.ReadFrom(pkFile)
 	pkFile.Close()
 
-	vkFile, err := os.Open(chainark.UnitVkeyFile)
+	vkFile, err := os.Open(example.UnitVkeyFile)
 	if err != nil {
 		panic(err)
 	}
@@ -125,7 +136,7 @@ func main() {
 		panic(err)
 	}
 
-	proofFile, err := os.Create(chainark.UnitProofFile)
+	proofFile, err := os.Create(example.UnitProofFile)
 	if err != nil {
 		panic(err)
 	}
