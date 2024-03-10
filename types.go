@@ -23,6 +23,12 @@ func NewLinkageID[FR emulated.FieldParams](v []emulated.Element[FR], b int) Link
 		BitsPerElement: b,
 	}
 }
+func PlaceholderLinkageID[FR emulated.FieldParams](nbEles, bitsPerElement int) LinkageID[FR] {
+	return LinkageID[FR]{
+		Vals:           make([]emulated.Element[FR], nbEles),
+		BitsPerElement: bitsPerElement,
+	}
+}
 func (id LinkageID[FR]) AssertIsEqual(api frontend.API, other LinkageID[FR]) error {
 	api.AssertIsEqual(id.BitsPerElement, other.BitsPerElement)
 	return assertElementsEqual[FR](api, id.Vals, other.Vals)
@@ -70,6 +76,12 @@ func NewFingerPring[FR emulated.FieldParams](v []emulated.Element[FR], b int) Fi
 	return FingerPrint[FR]{
 		Vals:           v,
 		BitsPerElement: b,
+	}
+}
+func PlaceholderFingerPrint[FR emulated.FieldParams](nbEles, bitsPerElement int) FingerPrint[FR] {
+	return FingerPrint[FR]{
+		Vals:           make([]emulated.Element[FR], nbEles),
+		BitsPerElement: bitsPerElement,
 	}
 }
 func (fp FingerPrint[FR]) AssertIsEqual(api frontend.API, other FingerPrint[FR]) error {

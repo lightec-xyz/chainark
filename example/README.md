@@ -22,21 +22,21 @@ It outputs hash value `66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0
 
 Then `data0`, or the first line of `data.txt` is simply
 
-`66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925636861696e61726b206578616d706c650a`
+`66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925636861696e61726b206578616d706c65`
 
-with `636861696e61726b206578616d706c650a` as the hex encode of `chainark example`.
+with `636861696e61726b206578616d706c65` as the hex encode of `chainark example`.
 
 Going forward we may have the ID corresponding to `data0` from running the command:
 
-`echo 66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925636861696e61726b206578616d706c650a | xxd -r -p | openssl sha256 -hex`
+`echo 66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925636861696e61726b206578616d706c65 | xxd -r -p | openssl sha256 -hex`
 
-and its value is `18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f`. This is then the `genesis ID` or `id0`. Usually a genesis ID is publically known and recognized. 
+and its value is `843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85`. This is then the `genesis ID` or `id0`. Usually a genesis ID is publically known and recognized.
 
-Now `data1` becomes `18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f636861696e61726b206578616d706c650a`, and we can compute `id1`, and so on.
+Now `data1` becomes `843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85636861696e61726b206578616d706c65`, and we can compute `id1`, and so on.
 
 ## The proving task
 
-Now we want to prove that following the above hashing computation rule, a hash value of `d9d88c7cd8d017cbd9bddb18d2685a234d41b5c74ce3f6e32cb79dd9d6b70a84` could be computed starting from the data identified by the `genesis ID` of `18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f`. 
+Now we want to prove that following the above hashing computation rule, a hash value of `a1ac83d0e18e0845ced8bcd71be011c011c8cde038b3aa98e4407fe5584acd7e` could be computed starting from the data identified by the `genesis ID` of `843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85`.
 
 To do this, we first need to generate all the `unit` proofs, that is, we need a ZK-proof from a data item (`hash || "chainark example"`) to an ID (`hash`) for all the IDs from genesis to the one under question. `Unit` circuit is implemented in the `unit_circuit.go`. Besides unit circuit definition, it also needs to implement `UnitCircuitPublicAssignment` and a main function to output the unit proofs.
 

@@ -3,6 +3,8 @@
 # ensure that the application is newly built
 go build .
 
+# ./unit --setup
+
 ./unit 843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85 8e496c403d06ed9e28c69ee853d498a929809596cc86c71aba7426c967d82df7
 mv unit.proof unit.1.proof
 

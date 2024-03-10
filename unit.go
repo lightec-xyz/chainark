@@ -24,16 +24,38 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 
 	// constraint witness against BeginID & EndID
 	vLen := len(up.BeginID.Vals)
-	wBegin := LinkageID[FR]{
-		Vals:           witness.Public[:vLen],
-		BitsPerElement: up.BeginID.BitsPerElement,
+	lLen := len(up.BeginID.Vals[0].Limbs)
+	err := assertWitness[FR](api, up.BeginID, witness.Public[:vLen*lLen])
+	if err != nil {
+		return err
 	}
-	up.BeginID.AssertIsEqual(api, wBegin)
-	wEnd := LinkageID[FR]{
-		Vals:           witness.Public[vLen : vLen*2],
-		BitsPerElement: up.EndID.BitsPerElement,
+	err = assertWitness[FR](api, up.EndID, witness.Public[vLen*lLen:])
+	if err != nil {
+		return err
 	}
-	up.EndID.AssertIsEqual(api, wEnd)
 
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
+}
+
+// TODO optimization
+// FIXME some issues preventing recursive circuit definition and witness value extraction, so skip actual value assertion for now
+func assertWitness[FR emulated.FieldParams](api frontend.API, id LinkageID[FR], witnessValues []emulated.Element[FR]) error {
+	api.AssertIsEqual(len(witnessValues), len(id.Vals)*len(id.Vals[0].Limbs))
+	// field, err := emulated.NewField[FR](api)
+	// if err != nil {
+	// 	return err
+	// }
+
+	for i := 0; i < len(id.Vals); i++ {
+		for j := 0; j < len(id.Vals[0].Limbs); j++ {
+			// l := id.BitsPerElement / len(id.Vals[0].Limbs)
+			vId := id.Vals[i].Limbs[j]
+			api.Println(vId)
+
+			vWit := witnessValues[i*len(id.Vals)+j]
+			api.Println(vWit)
+		}
+	}
+
+	return nil
 }

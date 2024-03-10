@@ -13,10 +13,10 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/scs"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
-	"github.com/consensys/gnark/std/math/uints"
 	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 	"github.com/consensys/gnark/test/unsafekzg"
 	"github.com/lightec-xyz/chainark"
+	"github.com/lightec-xyz/chainark/example"
 )
 
 func main() {
@@ -26,11 +26,11 @@ func main() {
 		return
 	}
 
-	unit := chainark.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: make([]uints.U8, chainark.IDLength),
-		EndID:   make([]uints.U8, chainark.IDLength),
+	unit := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
+		BeginID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
+		EndID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
 	}
-	ccsUnit, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &unit)
+	ccsUnit, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &unit)
 
 	unitVkeyFileName := "../unit/unit.vkey"
 	unitVkeyFile, err := os.Open(unitVkeyFileName)
@@ -46,24 +46,28 @@ func main() {
 		panic(err)
 	}
 
-	genesisHex := "18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f"
+	genesisHex := "843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85"
 	genesisBytes := make([]byte, len(genesisHex)/2)
 	hex.Decode(genesisBytes, []byte(genesisHex))
 
 	// computed with the fp/fp utility, before computing you need to at least compute the verification key for the unit circuit
-	unitFpBytes := []byte{228, 106, 40, 72, 122, 77, 90, 241, 36, 48, 48, 55, 97, 230, 185, 69, 39, 17, 21, 178, 24, 234, 142, 148, 165, 162, 194, 144, 37, 174, 143, 12}
+	unitFpBytes := []byte{14, 9, 195, 26, 127, 145, 104, 124, 132, 144, 108, 96, 177, 171, 84, 192, 151, 161, 68, 45, 17, 136, 213, 223, 127, 9, 165, 217, 35, 10, 253, 27}
 
 	circuit := chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		UnitVKey:          recursiveUnitVkey, // SECURITY: make it a constant to save constraints, also to fix the vkey
+		// FIXME UnitVKey should be constant however this leads to segment fault, will check back later. If not resolved will have to add back unit fp bytes
+		// UnitVKey:          recursiveUnitVkey, // SECURITY: make it a constant to save constraints, also to fix the vkey
+		UnitVKey:          recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
 		FirstProof:        recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
 		SecondProof:       recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
-		AcceptableFirstFp: make([]uints.U8, chainark.FpLength),
+		AcceptableFirstFp: chainark.PlaceholderFingerPrint[sw_bn254.ScalarField](example.FpLength, example.FingerPrintBitsPerElement),
 
-		GenesisID: make([]uints.U8, chainark.IDLength),
-		FirstID:   make([]uints.U8, chainark.IDLength),
-		SecondID:  make([]uints.U8, chainark.IDLength),
+		GenesisID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
+		FirstID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
+		SecondID:  chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
 
-		UnitFpBytes:    unitFpBytes,  // SECURITY: constant as well
+		FirstWitness:  recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
+		SecondWitness: recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
+
 		GenesisIDBytes: genesisBytes, // constant as well
 		InnerField:     ecc.BN254.ScalarField(),
 	}
@@ -91,14 +95,14 @@ func main() {
 			panic(err)
 		}
 
-		pkFile, err := os.Create(chainark.GenesisPkeyFile)
+		pkFile, err := os.Create(example.GenesisPkeyFile)
 		if err != nil {
 			panic(err)
 		}
 		pk.WriteTo(pkFile)
 		pkFile.Close()
 
-		vkFile, err := os.Create(chainark.GenesisVkeyFile)
+		vkFile, err := os.Create(example.GenesisVkeyFile)
 		if err != nil {
 			panic(err)
 		}
@@ -109,7 +113,8 @@ func main() {
 		return
 	}
 
-	if len(os.Args) < 5 || len(os.Args[3]) != chainark.IDLength*2 || len(os.Args[4]) != chainark.IDLength*2 {
+	idHexLen := example.IDLength * example.LinkageIDBitsPerElement * 2 / 8
+	if len(os.Args) < 5 || len(os.Args[3]) != idHexLen || len(os.Args[4]) != idHexLen {
 		fmt.Println("usage: ./genesis firstProofFile secondProofFile Id1 Id2\nNote that the Id is some value of SHA256, thus 32 bytes.")
 		return
 	}
@@ -147,29 +152,63 @@ func main() {
 	hex.Decode(id1Bytes, []byte(id1Hex))
 	hex.Decode(id2Bytes, []byte(id2Hex))
 
+	genesisID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](genesisBytes, example.LinkageIDBitsPerElement)
+	firstID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id1Bytes, example.LinkageIDBitsPerElement)
+	secondID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id2Bytes, example.LinkageIDBitsPerElement)
+
+	firstAssignment := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
+		BeginID: genesisID,
+		EndID:   firstID,
+	}
+	firstWitness, err := frontend.NewWitness(&firstAssignment, ecc.BN254.ScalarField())
+	if err != nil {
+		panic(err)
+	}
+	firstRecursiveWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](firstWitness)
+	if err != nil {
+		panic(err)
+	}
+	secondAssignment := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
+		BeginID: firstID,
+		EndID:   secondID,
+	}
+	secondWitness, err := frontend.NewWitness(&secondAssignment, ecc.BN254.ScalarField())
+	if err != nil {
+		panic(err)
+	}
+	secondRecursiveWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](secondWitness)
+	if err != nil {
+		panic(err)
+	}
+
 	w := chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		// FirstProof: ,//recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](),
+		UnitVKey:          recursiveUnitVkey,
 		FirstProof:        firstRecursiveProof,
 		SecondProof:       secondRecursiveProof,
-		AcceptableFirstFp: uints.NewU8Array(unitFpBytes),
+		AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](unitFpBytes, example.FingerPrintBitsPerElement),
 
-		GenesisID: uints.NewU8Array(genesisBytes),
-		FirstID:   uints.NewU8Array(id1Bytes),
-		SecondID:  uints.NewU8Array(id2Bytes),
+		GenesisID: genesisID,
+		FirstID:   firstID,
+		SecondID:  secondID,
+
+		FirstWitness:  firstRecursiveWitness,
+		SecondWitness: secondRecursiveWitness,
 	}
+	witness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
+	pubWitness, err := witness.Public()
 
 	fmt.Println("loading keys ...")
 	pkey := plonk.NewProvingKey(ecc.BN254)
 	vkey := plonk.NewVerifyingKey(ecc.BN254)
 
-	pkFile, err := os.Open(chainark.GenesisPkeyFile)
+	pkFile, err := os.Open(example.GenesisPkeyFile)
 	if err != nil {
 		panic(err)
 	}
 	pkey.ReadFrom(pkFile)
 	pkFile.Close()
 
-	vkFile, err := os.Open(chainark.GenesisVkeyFile)
+	vkFile, err := os.Open(example.GenesisVkeyFile)
 	if err != nil {
 		panic(err)
 	}
@@ -177,7 +216,6 @@ func main() {
 	vkFile.Close()
 
 	fmt.Println("proving ...")
-	witness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	proof, err := plonk.Prove(ccs, pkey, witness,
 		recursive_plonk.GetNativeProverOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
 	if err != nil {
@@ -185,13 +223,13 @@ func main() {
 	}
 
 	fmt.Println("verifying ...")
-	err = plonk.Verify(proof, vkey, witness,
+	err = plonk.Verify(proof, vkey, pubWitness,
 		recursive_plonk.GetNativeVerifierOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
 	if err != nil {
 		panic(err)
 	}
 
-	proofFile, err := os.Create(chainark.GenesisProofFile)
+	proofFile, err := os.Create(example.GenesisProofFile)
 	if err != nil {
 		panic(err)
 	}

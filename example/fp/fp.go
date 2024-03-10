@@ -10,10 +10,11 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/scs"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
-	"github.com/consensys/gnark/std/math/uints"
+	"github.com/consensys/gnark/std/math/emulated"
 	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 	"github.com/consensys/gnark/test/unsafekzg"
 	"github.com/lightec-xyz/chainark"
+	"github.com/lightec-xyz/chainark/example"
 )
 
 func main() {
@@ -37,9 +38,15 @@ func main() {
 		panic(err)
 	}
 
-	unit := chainark.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: make([]uints.U8, chainark.IDLength),
-		EndID:   make([]uints.U8, chainark.IDLength),
+	unit := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
+		BeginID: chainark.LinkageID[sw_bn254.ScalarField]{
+			Vals:           make([]emulated.Element[sw_bn254.ScalarField], example.IDLength),
+			BitsPerElement: example.LinkageIDBitsPerElement,
+		},
+		EndID: chainark.LinkageID[sw_bn254.ScalarField]{
+			Vals:           make([]emulated.Element[sw_bn254.ScalarField], example.IDLength),
+			BitsPerElement: example.LinkageIDBitsPerElement,
+		},
 	}
 	ccsUnit, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &unit)
 
