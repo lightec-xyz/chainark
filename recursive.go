@@ -6,30 +6,35 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra"
 	"github.com/consensys/gnark/std/math/emulated"
-	"github.com/consensys/gnark/std/math/uints"
 	"github.com/consensys/gnark/std/recursion/plonk"
 )
 
 type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
 	FirstVKey         plonk.VerifyingKey[FR, G1El, G2El]
 	FirstProof        plonk.Proof[FR, G1El, G2El]
-	AcceptableFirstFp FingerPrint `gnark:",public"`
+	AcceptableFirstFp FingerPrint[FR] `gnark:",public"`
 
-	SecondVKey  plonk.VerifyingKey[FR, G1El, G2El]
+	SecondVKey  plonk.VerifyingKey[FR, G1El, G2El] // this should be the unit vkey and should be provided as constant
 	SecondProof plonk.Proof[FR, G1El, G2El]
 
-	BeginID LinkageID `gnark:",public"`
-	RelayID LinkageID
-	EndID   LinkageID `gnark:",public"`
+	BeginID LinkageID[FR] `gnark:",public"`
+	RelayID LinkageID[FR]
+	EndID   LinkageID[FR] `gnark:",public"`
+
+	// workaround due to https://github.com/Consensys/gnark/issues/1079,
+	// that is, instead of creating witness for inner circuit verification,
+	// we are trying to constraint FirstWitness and SecondWitness
+	// against BeginID, RelayID and EndID
+	FirstWitness  plonk.Witness[FR]
+	SecondWitness plonk.Witness[FR]
 
 	// some constant values passed from outside
-	UnitFpBytes    FingerPrintBytes
-	GenesisFpBytes FingerPrintBytes
-	GenesisIDBytes LinkageIDBytes
+	UnitVKeyFpBytes FingerPrintBytes
+	GenesisFpBytes  FingerPrintBytes
+	GenesisIDBytes  LinkageIDBytes
 
 	// some data field needs from outside
-	innerField  *big.Int
-	gOrRCircuit frontend.Circuit
+	innerField *big.Int
 }
 
 func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
@@ -38,43 +43,45 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		return err
 	}
 
+	// TODO constraint FirstWitness against (BeginID, RelayID) and SecondWitness against (RelayID, EndID)
+
 	// assert the first proof
 	gOrR := GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]{
 		BeginID: c.BeginID,
 		EndID:   c.RelayID,
 	}
-	err = gOrR.Assert(api, verifier, c.FirstVKey, c.AcceptableFirstFp, c.GenesisFpBytes, c.GenesisIDBytes, c.FirstProof, c.gOrRCircuit, c.innerField)
+	err = gOrR.Assert(api, verifier, c.FirstVKey, c.FirstWitness, c.AcceptableFirstFp, c.GenesisFpBytes,
+		c.GenesisIDBytes, c.UnitVKeyFpBytes, c.FirstProof, c.innerField)
 	if err != nil {
 		return err
 	}
 
-	// assert the second proof, including the unit vkey fp assertion
+	// assert the second proof.
+	// Security: note that the instantiation of RecursiveCircuit shall include unit vkey as constant,
+	// otherwise we will have to assert the vkey against the known fingerprint
+	fpFixed := FingerPrintFromBytes[FR](c.UnitVKeyFpBytes, c.AcceptableFirstFp.BitsPerElement)
 	unit := UnitProof[FR, G1El, G2El, GtEl]{
 		BeginID: c.RelayID,
 		EndID:   c.EndID,
 	}
-	return unit.Assert(api, verifier, c.SecondVKey, c.UnitFpBytes, c.SecondProof, c.innerField)
-}
-
-type GenesisOrRecursiveCircuitPublicAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] interface {
-	New(beginID, endID LinkageID) frontend.Circuit
+	return unit.Assert(api, verifier, c.SecondVKey, c.SecondProof, c.SecondWitness, fpFixed, c.innerField)
 }
 
 type GenesisOrRecursiveProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	BeginID LinkageID
-	EndID   LinkageID
+	BeginID LinkageID[FR]
+	EndID   LinkageID[FR]
 }
 
 func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	api frontend.API,
 	verifier *plonk.Verifier[FR, G1El, G2El, GtEl],
 	vkey plonk.VerifyingKey[FR, G1El, G2El],
-	acceptableFp FingerPrint,
+	witness plonk.Witness[FR],
+	acceptableFp FingerPrint[FR],
 	genesisFpBytes FingerPrintBytes,
 	genesisIdBytes LinkageIDBytes,
+	unitVkeyBytes FingerPrintBytes,
 	proof plonk.Proof[FR, G1El, G2El],
-	// pubAssignment GenesisOrRecursiveCircuitPublicAssignment[FR, G1El, G2El, GtEl],
-	gOrRCircuit frontend.Circuit,
 	field *big.Int) error {
 
 	// we only accept the verification key if either holds:
@@ -85,32 +92,34 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	if err != nil {
 		return err
 	}
-	vkeyFp, err := FpValueOf(api, fp)
+	vkeyFp, err := FpValueOf[FR](api, fp, acceptableFp.BitsPerElement)
 	if err != nil {
 		return err
 	}
-	recursiveFpTest := vkeyFp.IsEqual(api, acceptableFp)
-
-	genesisVkeyFp, err := FpValueOf(api, uints.NewU8Array(genesisFpBytes))
+	recursiveFpTest, err := vkeyFp.IsEqual(api, acceptableFp)
 	if err != nil {
 		return err
 	}
-	genesisFpTest := vkeyFp.IsEqual(api, genesisVkeyFp)
 
-	genesisId := LinkageID(uints.NewU8Array(genesisIdBytes))
-	genesisIdTest := rp.BeginID.IsEqual(api, &genesisId)
+	genesisVkeyFp := FingerPrintFromBytes[FR](genesisFpBytes, acceptableFp.BitsPerElement)
+	genesisFpTest, err := vkeyFp.IsEqual(api, genesisVkeyFp)
+	if err != nil {
+		return err
+	}
+
+	genesisId := LinkageIDFromBytes[FR](genesisIdBytes, rp.BeginID.BitsPerElement)
+	genesisIdTest, err := rp.BeginID.IsEqual(api, genesisId)
+	if err != nil {
+		return err
+	}
 	genesisTest := api.And(genesisFpTest, genesisIdTest)
 
 	firstVkeyTest := api.Or(genesisTest, recursiveFpTest)
 	api.AssertIsEqual(firstVkeyTest, 1)
 
-	// assemble the witness and assert the proof
-	// assignment := pubAssignment.New(rp.BeginID, rp.EndID)
-	witness, err := createWitness[FR](gOrRCircuit, field)
-	if err != nil {
-		return err
-	}
+	// TODO constraint witness against rp.BeginID and rp.EndId
+
 	// TODO do we need to select from RecursiveCircuit and GenesisCircuit? (selector: recursiveFpTest)
 
-	return verifier.AssertProof(vkey, proof, *witness, plonk.WithCompleteArithmetic())
+	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }

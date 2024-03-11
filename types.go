@@ -58,7 +58,7 @@ func LinkageIDFromU8s[FR emulated.FieldParams](api frontend.API, data []uints.U8
 		BitsPerElement: bitsPerElement,
 	}, nil
 }
-func LinkageIDFromBytes[FR emulated.FieldParams](data []byte, bitsPerElement int) LinkageID[FR] {
+func LinkageIDFromBytes[FR emulated.FieldParams](data LinkageIDBytes, bitsPerElement int) LinkageID[FR] {
 	return LinkageID[FR]{
 		Vals:           ElementsFromBytes[FR](data, bitsPerElement),
 		BitsPerElement: bitsPerElement,
@@ -120,7 +120,7 @@ func TestVkeyFp[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G
 	return fp.IsEqual(api, otherFp)
 }
 
-func FingerPrintFromBytes[FR emulated.FieldParams](data []byte, bitsPerElement int) FingerPrint[FR] {
+func FingerPrintFromBytes[FR emulated.FieldParams](data FingerPrintBytes, bitsPerElement int) FingerPrint[FR] {
 	return FingerPrint[FR]{
 		Vals:           ElementsFromBytes[FR](data, bitsPerElement),
 		BitsPerElement: bitsPerElement,

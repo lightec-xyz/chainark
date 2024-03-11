@@ -23,7 +23,8 @@ type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 	SecondWitness plonk.Witness[FR] // FirstID -> SecondID
 
 	// some constant values passed from outside
-	GenesisIDBytes LinkageIDBytes
+	UnitVkeyFpBytes FingerPrintBytes
+	GenesisIDBytes  LinkageIDBytes
 
 	// some data field needs from outside
 	InnerField *big.Int `gnark:"-"`
@@ -46,12 +47,15 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	c.AcceptableFirstFp.AssertIsEqual(api, fp)
 
 	// TODO aggregated verification
+
+	fpFixed := FingerPrintFromBytes[FR](c.UnitVkeyFpBytes, c.AcceptableFirstFp.BitsPerElement)
+
 	// assert the first proof
 	unit1 := UnitProof[FR, G1El, G2El, GtEl]{
 		BeginID: c.GenesisID,
 		EndID:   c.FirstID,
 	}
-	err = unit1.Assert(api, verifier, c.UnitVKey, c.FirstProof, c.FirstWitness, c.InnerField)
+	err = unit1.Assert(api, verifier, c.UnitVKey, c.FirstProof, c.FirstWitness, fpFixed, c.InnerField)
 	if err != nil {
 		return err
 	}
@@ -61,5 +65,5 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		BeginID: c.FirstID,
 		EndID:   c.SecondID,
 	}
-	return unit2.Assert(api, verifier, c.UnitVKey, c.SecondProof, c.SecondWitness, c.InnerField)
+	return unit2.Assert(api, verifier, c.UnitVKey, c.SecondProof, c.SecondWitness, fpFixed, c.InnerField)
 }

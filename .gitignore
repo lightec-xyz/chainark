@@ -29,3 +29,5 @@ example/fp/fp
 # Go workspace file
 go.work.sum
 .vscode
+
+.DS_Store

@@ -7,11 +7,9 @@ import (
 	"strings"
 
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark-crypto/kzg"
 	"github.com/consensys/gnark/backend/plonk"
 	cs "github.com/consensys/gnark/constraint/bn254"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/frontend/cs/scs"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
 	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 	"github.com/consensys/gnark/test/unsafekzg"
@@ -26,70 +24,19 @@ func main() {
 		return
 	}
 
-	unit := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
-		EndID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
-	}
-	ccsUnit, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &unit)
-
-	unitVkeyFileName := "../unit/unit.vkey"
-	unitVkeyFile, err := os.Open(unitVkeyFileName)
-	if err != nil {
-		panic(err)
-	}
-	unitVkey := plonk.NewVerifyingKey(ecc.BN254)
-	unitVkey.ReadFrom(unitVkeyFile)
-	unitVkeyFile.Close()
-
-	recursiveUnitVkey, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](unitVkey)
-	if err != nil {
-		panic(err)
-	}
-
-	genesisHex := "843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85"
-	genesisBytes := make([]byte, len(genesisHex)/2)
-	hex.Decode(genesisBytes, []byte(genesisHex))
-
-	// computed with the fp/fp utility, before computing you need to at least compute the verification key for the unit circuit
-	unitFpBytes := []byte{14, 9, 195, 26, 127, 145, 104, 124, 132, 144, 108, 96, 177, 171, 84, 192, 151, 161, 68, 45, 17, 136, 213, 223, 127, 9, 165, 217, 35, 10, 253, 27}
-
-	circuit := chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		// FIXME UnitVKey should be constant however this leads to segment fault, will check back later. If not resolved will have to add back unit fp bytes
-		// UnitVKey:          recursiveUnitVkey, // SECURITY: make it a constant to save constraints, also to fix the vkey
-		UnitVKey:          recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
-		FirstProof:        recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
-		SecondProof:       recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
-		AcceptableFirstFp: chainark.PlaceholderFingerPrint[sw_bn254.ScalarField](example.FpLength, example.FingerPrintBitsPerElement),
-
-		GenesisID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
-		FirstID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
-		SecondID:  chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
-
-		FirstWitness:  recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
-		SecondWitness: recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
-
-		GenesisIDBytes: genesisBytes, // constant as well
-		InnerField:     ecc.BN254.ScalarField(),
-	}
-
-	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit)
-	if err != nil {
-		panic(err)
-	}
+	recursiveUnitVkey, genesisIdBytes, unitFpBytes, ccsGenesis, _ := example.CreateGenesisObjects()
 
 	if strings.Compare(os.Args[1], "--setup") == 0 {
 		fmt.Println("setting up... ")
 
-		scs := ccs.(*cs.SparseR1CS)
-
-		var srs, srsLagrange kzg.SRS
+		scs := ccsGenesis.(*cs.SparseR1CS)
 
 		// let's generate the files again
-		srs, srsLagrange, err = unsafekzg.NewSRS(scs, unsafekzg.WithFSCache())
+		srs, srsLagrange, err := unsafekzg.NewSRS(scs, unsafekzg.WithFSCache())
 		if err != nil {
 			panic(err)
 		}
-		pk, vk, err := plonk.Setup(ccs, srs, srsLagrange)
+		pk, vk, err := plonk.Setup(ccsGenesis, srs, srsLagrange)
 		//_, err := plonk.Setup(r1cs, kate, &publicWitness)
 		if err != nil {
 			panic(err)
@@ -152,7 +99,7 @@ func main() {
 	hex.Decode(id1Bytes, []byte(id1Hex))
 	hex.Decode(id2Bytes, []byte(id2Hex))
 
-	genesisID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](genesisBytes, example.LinkageIDBitsPerElement)
+	genesisID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](genesisIdBytes, example.LinkageIDBitsPerElement)
 	firstID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id1Bytes, example.LinkageIDBitsPerElement)
 	secondID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id2Bytes, example.LinkageIDBitsPerElement)
 
@@ -216,7 +163,7 @@ func main() {
 	vkFile.Close()
 
 	fmt.Println("proving ...")
-	proof, err := plonk.Prove(ccs, pkey, witness,
+	proof, err := plonk.Prove(ccsGenesis, pkey, witness,
 		recursive_plonk.GetNativeProverOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
 	if err != nil {
 		panic(err)

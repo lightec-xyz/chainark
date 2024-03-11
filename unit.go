@@ -20,12 +20,21 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	vkey plonk.VerifyingKey[FR, G1El, G2El],
 	proof plonk.Proof[FR, G1El, G2El],
 	witness plonk.Witness[FR],
+	fpFixed FingerPrint[FR],
 	field *big.Int) error {
+
+	// ensure that we are using the correct verification key
+	fp, err := vkey.FingerPrint(api)
+	if err != nil {
+		return err
+	}
+	vkeyFp, err := FpValueOf[FR](api, fp, fpFixed.BitsPerElement)
+	fpFixed.AssertIsEqual(api, vkeyFp)
 
 	// constraint witness against BeginID & EndID
 	vLen := len(up.BeginID.Vals)
 	lLen := len(up.BeginID.Vals[0].Limbs)
-	err := assertWitness[FR](api, up.BeginID, witness.Public[:vLen*lLen])
+	err = assertWitness[FR](api, up.BeginID, witness.Public[:vLen*lLen])
 	if err != nil {
 		return err
 	}
