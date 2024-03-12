@@ -14,24 +14,20 @@ type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alg
 	FirstProof        plonk.Proof[FR, G1El, G2El]
 	AcceptableFirstFp FingerPrint[FR] `gnark:",public"`
 
-	SecondVKey  plonk.VerifyingKey[FR, G1El, G2El] // this should be the unit vkey and should be provided as constant
+	SecondVKey  plonk.VerifyingKey[FR, G1El, G2El]
 	SecondProof plonk.Proof[FR, G1El, G2El]
 
 	BeginID LinkageID[FR] `gnark:",public"`
 	RelayID LinkageID[FR]
 	EndID   LinkageID[FR] `gnark:",public"`
 
-	// workaround due to https://github.com/Consensys/gnark/issues/1079,
-	// that is, instead of creating witness for inner circuit verification,
-	// we are trying to constraint FirstWitness and SecondWitness
-	// against BeginID, RelayID and EndID
 	FirstWitness  plonk.Witness[FR]
 	SecondWitness plonk.Witness[FR]
 
 	// some constant values passed from outside
-	UnitVKeyFpBytes FingerPrintBytes
 	GenesisFpBytes  FingerPrintBytes
 	GenesisIDBytes  LinkageIDBytes
+	UnitVKeyFpBytes FingerPrintBytes
 
 	// some data field needs from outside
 	innerField *big.Int
@@ -57,8 +53,6 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 	}
 
 	// assert the second proof.
-	// Security: note that the instantiation of RecursiveCircuit shall include unit vkey as constant,
-	// otherwise we will have to assert the vkey against the known fingerprint
 	fpFixed := FingerPrintFromBytes[FR](c.UnitVKeyFpBytes, c.AcceptableFirstFp.BitsPerElement)
 	unit := UnitProof[FR, G1El, G2El, GtEl]{
 		BeginID: c.RelayID,

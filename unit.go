@@ -46,8 +46,7 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }
 
-// TODO optimization
-// FIXME some issues preventing recursive circuit definition and witness value extraction, so skip actual value assertion for now
+// FIXME skip actual value assertion for now
 func assertWitness[FR emulated.FieldParams](api frontend.API, id LinkageID[FR], witnessValues []emulated.Element[FR]) error {
 	api.AssertIsEqual(len(witnessValues), len(id.Vals)*len(id.Vals[0].Limbs))
 	// field, err := emulated.NewField[FR](api)

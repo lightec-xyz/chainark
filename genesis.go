@@ -10,7 +10,7 @@ import (
 )
 
 type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	UnitVKey    plonk.VerifyingKey[FR, G1El, G2El] // this could be constant, and provided during circuit compilation (avoid finger print verification)
+	UnitVKey    plonk.VerifyingKey[FR, G1El, G2El]
 	FirstProof  plonk.Proof[FR, G1El, G2El]
 	SecondProof plonk.Proof[FR, G1El, G2El]
 
