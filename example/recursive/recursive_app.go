@@ -28,7 +28,8 @@ func main() {
 
 	recursiveUnitVkey, genesisIdBytes, unitFpBytes, ccsGenesis, ccsUnit := example.CreateGenesisObjects()
 
-	genesisFpBytes := []byte{198, 92, 231, 251, 77, 241, 140, 99, 157, 211, 134, 74, 207, 75, 51, 108, 45, 88, 220, 132, 188, 228, 206, 79, 167, 131, 140, 110, 40, 213, 212, 6}
+	genesisFpBytes := []byte{133, 239, 51, 63, 8, 199, 118, 72, 84, 162, 76, 39, 204, 248, 9, 95, 220, 161, 208, 111, 188, 23, 171, 170, 104, 152, 161, 245, 194, 245, 177, 8}
+	recursiveFpBytes := []byte{165, 111, 177, 129, 144, 30, 218, 178, 138, 179, 105, 144, 189, 242, 76, 181, 220, 176, 179, 62, 108, 86, 116, 171, 196, 53, 100, 189, 210, 184, 75, 8}
 
 	recursive := chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		FirstVKey:         recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsGenesis),
@@ -132,25 +133,27 @@ func main() {
 	secondID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id2Bytes, example.LinkageIDBitsPerElement)
 
 	var firstAssignment frontend.Circuit
+	var firstVkeyFileName string
+	var fpBytes []byte
 	selector := string(os.Args[1])
 	if strings.EqualFold(selector, "-g") {
+		firstVkeyFileName = "../genesis/genesis.vkey"
 		firstAssignment = &chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-			AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](genesisFpBytes, example.FingerPrintBitsPerElement),
+			AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](unitFpBytes, example.FingerPrintBitsPerElement),
 			GenesisID:         genesisID,
 			SecondID:          firstID,
 		}
+		fpBytes = genesisFpBytes
 	} else {
+		firstVkeyFileName = "recursive.vkey"
 		firstAssignment = &chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 			AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](genesisFpBytes, example.FingerPrintBitsPerElement), //FIXME need recursive vkey fp here
 			BeginID:           genesisID,
 			EndID:             firstID,
 		}
+		fpBytes = recursiveFpBytes
 	}
 	firstWitness, err := frontend.NewWitness(firstAssignment, ecc.BN254.ScalarField(), frontend.PublicOnly())
-	if err != nil {
-		panic(err)
-	}
-	firstRecursiveWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](firstWitness)
 	if err != nil {
 		panic(err)
 	}
@@ -163,18 +166,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	secondRecursiveWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](secondWitness)
-	if err != nil {
-		panic(err)
-	}
 
-	var firstVkeyFileName string
-
-	if strings.EqualFold(selector, "-g") {
-		firstVkeyFileName = "../genesis/genesis.vkey"
-	} else {
-		firstVkeyFileName = "recursive.vkey"
-	}
+	fmt.Println("loading first verification key from ", firstVkeyFileName)
 	firstVkeyFile, err := os.Open(firstVkeyFileName)
 	if err != nil {
 		panic(err)
@@ -183,6 +176,24 @@ func main() {
 	firstVkey.ReadFrom(firstVkeyFile)
 	firstVkeyFile.Close()
 
+	// let's make sure that the first set of vkey/witness/proof checks out
+	fmt.Println("verifying first proof natively...")
+	err = plonk.Verify(firstProof, firstVkey, firstWitness,
+		recursive_plonk.GetNativeVerifierOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
+	if err != nil {
+		panic(err)
+	}
+
+	// proceed to recursive verification
+
+	firstRecursiveWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](firstWitness)
+	if err != nil {
+		panic(err)
+	}
+	secondRecursiveWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](secondWitness)
+	if err != nil {
+		panic(err)
+	}
 	recursiveFirstVkey, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](firstVkey)
 	if err != nil {
 		panic(err)
@@ -191,7 +202,7 @@ func main() {
 	w := chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		FirstVKey:         recursiveFirstVkey,
 		FirstProof:        firstRecursiveProof,
-		AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](unitFpBytes, example.FingerPrintBitsPerElement),
+		AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](fpBytes, example.FingerPrintBitsPerElement),
 
 		SecondVKey:  recursiveUnitVkey,
 		SecondProof: secondRecursiveProof,

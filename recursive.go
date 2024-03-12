@@ -39,7 +39,9 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		return err
 	}
 
-	// TODO constraint FirstWitness against (BeginID, RelayID) and SecondWitness against (RelayID, EndID)
+	// leave to individual recursive verification:
+	// genesis circuit: constraint FirstWitness against (BeginID, RelayID)
+	// unit circuit: constraint SecondWitness against (RelayID, EndID)
 
 	// assert the first proof
 	gOrR := GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]{
@@ -94,12 +96,14 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	if err != nil {
 		return err
 	}
+	api.Println(recursiveFpTest)
 
 	genesisVkeyFp := FingerPrintFromBytes[FR](genesisFpBytes, acceptableFp.BitsPerElement)
 	genesisFpTest, err := vkeyFp.IsEqual(api, genesisVkeyFp)
 	if err != nil {
 		return err
 	}
+	api.Println(genesisFpTest)
 
 	genesisId := LinkageIDFromBytes[FR](genesisIdBytes, rp.BeginID.BitsPerElement)
 	genesisIdTest, err := rp.BeginID.IsEqual(api, genesisId)
@@ -107,8 +111,10 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 		return err
 	}
 	genesisTest := api.And(genesisFpTest, genesisIdTest)
+	api.Println(genesisTest)
 
 	firstVkeyTest := api.Or(genesisTest, recursiveFpTest)
+	api.Println(firstVkeyTest)
 	api.AssertIsEqual(firstVkeyTest, 1)
 
 	// TODO constraint witness against rp.BeginID and rp.EndId
