@@ -10,7 +10,10 @@
 
 example/unit/unit
 example/genesis/genesis
-example/fp/fp
+example/recursive/recursive
+example/fp_unit/fp_unit
+example/fp_genesis/fp_genesis
+example/fp_recursive/fp_recursive
 
 # Generated data
 *.proof
@@ -28,6 +31,7 @@ example/fp/fp
 
 # Go workspace file
 go.work.sum
+go.sum
 .vscode
 
 .DS_Store

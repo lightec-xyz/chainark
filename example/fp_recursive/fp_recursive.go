@@ -46,8 +46,7 @@ func main() {
 		panic(err)
 	}
 
-	_, genesisIdBytes, ccsGenesis, _ := example.CreateGenesisObjects()
-	genesisFpBytes := []byte{133, 239, 51, 63, 8, 199, 118, 72, 84, 162, 76, 39, 204, 248, 9, 95, 220, 161, 208, 111, 188, 23, 171, 170, 104, 152, 161, 245, 194, 245, 177, 8}
+	_, ccsGenesis, _ := example.CreateGenesisObjects()
 
 	recursive := chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		FirstVKey:         recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsGenesis),
@@ -65,8 +64,8 @@ func main() {
 		SecondWitness: recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
 
 		UnitVKeyFpBytes: example.GetUnitFpBytes(),
-		GenesisFpBytes:  genesisFpBytes,
-		GenesisIDBytes:  genesisIdBytes,
+		GenesisFpBytes:  example.GetGenesisFpBytes(),
+		GenesisIDBytes:  example.GetGenesisIdBytes(),
 	}
 	ccsRecursive, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &recursive)
 

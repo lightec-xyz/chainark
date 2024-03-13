@@ -26,7 +26,7 @@ func main() {
 		return
 	}
 
-	recursiveUnitVkey, genesisIdBytes, ccsGenesis, ccsUnit := example.CreateGenesisObjects()
+	recursiveUnitVkey, ccsGenesis, ccsUnit := example.CreateGenesisObjects()
 
 	recursive := chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		FirstVKey:         recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsGenesis),
@@ -45,7 +45,7 @@ func main() {
 
 		UnitVKeyFpBytes: example.GetUnitFpBytes(),
 		GenesisFpBytes:  example.GetGenesisFpBytes(),
-		GenesisIDBytes:  genesisIdBytes,
+		GenesisIDBytes:  example.GetGenesisIdBytes(),
 	}
 
 	ccsRecursive, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &recursive)
@@ -88,7 +88,7 @@ func main() {
 	idHexLen := example.IDLength * example.LinkageIDBitsPerElement * 2 / 8
 	if len(os.Args) < 6 || len(os.Args[4]) != idHexLen || len(os.Args[5]) != idHexLen {
 		fmt.Println("usage: ./recursive -g genesisProofFile unitProofFile Id2 Id3\nNote that the Id is some value of SHA256, thus 32 bytes.")
-		fmt.Println("usage: ./recursive -r recursiveProofFile unitProofFile Idn Idn+1\n")
+		fmt.Println("usage: ./recursive -r recursiveProofFile unitProofFile Idn Idn+1")
 		return
 	}
 
@@ -125,7 +125,7 @@ func main() {
 	hex.Decode(id1Bytes, []byte(id1Hex))
 	hex.Decode(id2Bytes, []byte(id2Hex))
 
-	genesisID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](genesisIdBytes, example.LinkageIDBitsPerElement)
+	genesisID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](example.GetGenesisIdBytes(), example.LinkageIDBitsPerElement)
 	firstID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id1Bytes, example.LinkageIDBitsPerElement)
 	secondID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id2Bytes, example.LinkageIDBitsPerElement)
 

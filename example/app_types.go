@@ -45,11 +45,17 @@ func GetUnitFpBytes() []byte {
 }
 func GetGenesisFpBytes() []byte {
 	// same, genesis --setup first, then fp_genesis
-	return []byte{172, 235, 87, 47, 43, 195, 99, 155, 185, 147, 97, 215, 71, 173, 217, 247, 28, 63, 139, 50, 8, 79, 179, 47, 50, 169, 223, 236, 127, 11, 115, 27}
+	return []byte{142, 27, 61, 173, 226, 152, 107, 187, 151, 90, 175, 31, 168, 142, 78, 230, 19, 25, 239, 207, 90, 9, 136, 195, 229, 102, 68, 60, 74, 34, 91, 32}
 }
 func GetRecursiveFpBytes() []byte {
 	// same
-	return []byte{174, 47, 78, 205, 192, 66, 254, 115, 48, 1, 34, 129, 36, 215, 36, 86, 29, 72, 247, 84, 139, 229, 72, 23, 255, 223, 251, 36, 179, 77, 35, 33}
+	return []byte{176, 55, 205, 99, 203, 98, 194, 115, 157, 3, 14, 156, 253, 235, 22, 69, 132, 14, 182, 87, 88, 236, 91, 191, 143, 30, 192, 144, 94, 219, 147, 28}
+}
+func GetGenesisIdBytes() []byte {
+	genesisIdHex := "843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85"
+	genesisIdBytes := make([]byte, 32)
+	hex.Decode(genesisIdBytes, []byte(genesisIdHex))
+	return genesisIdBytes
 }
 
 type UnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
@@ -82,7 +88,7 @@ func (uc *UnitCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 }
 
 func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine],
-	[]byte, constraint.ConstraintSystem, constraint.ConstraintSystem) {
+	constraint.ConstraintSystem, constraint.ConstraintSystem) {
 	unit := UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		BeginID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](IDLength, LinkageIDBitsPerElement),
 		EndID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](IDLength, LinkageIDBitsPerElement),
@@ -106,10 +112,6 @@ func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, 
 		panic(err)
 	}
 
-	genesisHex := "843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85"
-	genesisBytes := make([]byte, len(genesisHex)/2)
-	hex.Decode(genesisBytes, []byte(genesisHex))
-
 	genesis := chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		UnitVKey:          recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
 		FirstProof:        recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
@@ -124,7 +126,7 @@ func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, 
 		SecondWitness: recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
 
 		UnitVkeyFpBytes: GetUnitFpBytes(),
-		GenesisIDBytes:  genesisBytes,
+		GenesisIDBytes:  GetGenesisIdBytes(),
 		InnerField:      ecc.BN254.ScalarField(),
 	}
 
@@ -132,5 +134,5 @@ func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, 
 	if err != nil {
 		panic(err)
 	}
-	return recursiveUnitVkey, genesisBytes, ccsGenesis, ccsUnit
+	return recursiveUnitVkey, ccsGenesis, ccsUnit
 }

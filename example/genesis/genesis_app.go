@@ -24,7 +24,7 @@ func main() {
 		return
 	}
 
-	recursiveUnitVkey, genesisIdBytes, ccsGenesis, _ := example.CreateGenesisObjects()
+	recursiveUnitVkey, ccsGenesis, _ := example.CreateGenesisObjects()
 
 	if strings.Compare(os.Args[1], "--setup") == 0 {
 		fmt.Println("setting up... ")
@@ -99,7 +99,7 @@ func main() {
 	hex.Decode(id1Bytes, []byte(id1Hex))
 	hex.Decode(id2Bytes, []byte(id2Hex))
 
-	genesisID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](genesisIdBytes, example.LinkageIDBitsPerElement)
+	genesisID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](example.GetGenesisIdBytes(), example.LinkageIDBitsPerElement)
 	firstID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id1Bytes, example.LinkageIDBitsPerElement)
 	secondID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id2Bytes, example.LinkageIDBitsPerElement)
 

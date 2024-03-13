@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
-	"math/big"
 	"os"
 
 	"github.com/consensys/gnark-crypto/ecc"
@@ -48,11 +46,6 @@ func main() {
 		panic(err)
 	}
 
-	unitFpBi, _ := big.NewInt(0).SetString("6595291737298401108328414612222062604054630516884953155151193682100227621123", 10)
-	unitFpBytes := unitFpBi.Bytes()
-	genesisIdHex := "843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85"
-	genesisIdBytes := make([]byte, 32)
-	hex.Decode(genesisIdBytes, []byte(genesisIdHex))
 	genesis := chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		UnitVKey:          recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
 		FirstProof:        recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
@@ -64,8 +57,8 @@ func main() {
 		FirstWitness:      recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
 		SecondWitness:     recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
 
-		UnitVkeyFpBytes: unitFpBytes,
-		GenesisIDBytes:  genesisIdBytes,
+		UnitVkeyFpBytes: example.GetUnitFpBytes(),
+		GenesisIDBytes:  example.GetGenesisIdBytes(),
 		InnerField:      ecc.BN254.ScalarField(),
 	}
 	ccsGenesis, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &genesis)
