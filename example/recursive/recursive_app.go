@@ -146,8 +146,14 @@ func main() {
 		fpBytes = genesisFpBytes
 	} else {
 		firstVkeyFileName = "recursive.vkey"
+		var acceptableFpBytes []byte
+		if strings.EqualFold(selector, "-r0") {
+			acceptableFpBytes = genesisFpBytes
+		} else {
+			acceptableFpBytes = recursiveFpBytes
+		}
 		firstAssignment = &chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-			AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](genesisFpBytes, example.FingerPrintBitsPerElement), //FIXME need recursive vkey fp here
+			AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](acceptableFpBytes, example.FingerPrintBitsPerElement),
 			BeginID:           genesisID,
 			EndID:             firstID,
 		}

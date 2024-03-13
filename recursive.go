@@ -119,7 +119,5 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 
 	// TODO constraint witness against rp.BeginID and rp.EndId
 
-	// TODO do we need to select from RecursiveCircuit and GenesisCircuit? (selector: recursiveFpTest)
-
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }

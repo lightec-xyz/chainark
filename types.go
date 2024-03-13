@@ -72,7 +72,7 @@ type FingerPrint[FR emulated.FieldParams] struct {
 
 type FingerPrintBytes []byte
 
-func NewFingerPring[FR emulated.FieldParams](v []emulated.Element[FR], b int) FingerPrint[FR] {
+func NewFingerPrint[FR emulated.FieldParams](v []emulated.Element[FR], b int) FingerPrint[FR] {
 	return FingerPrint[FR]{
 		Vals:           v,
 		BitsPerElement: b,
