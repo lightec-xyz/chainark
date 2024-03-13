@@ -24,7 +24,7 @@ func main() {
 		return
 	}
 
-	recursiveUnitVkey, genesisIdBytes, unitFpBytes, ccsGenesis, _ := example.CreateGenesisObjects()
+	recursiveUnitVkey, genesisIdBytes, ccsGenesis, _ := example.CreateGenesisObjects()
 
 	if strings.Compare(os.Args[1], "--setup") == 0 {
 		fmt.Println("setting up... ")
@@ -132,7 +132,7 @@ func main() {
 		UnitVKey:          recursiveUnitVkey,
 		FirstProof:        firstRecursiveProof,
 		SecondProof:       secondRecursiveProof,
-		AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](unitFpBytes, example.FingerPrintBitsPerElement),
+		AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
 
 		GenesisID: genesisID,
 		FirstID:   firstID,

@@ -28,7 +28,6 @@ func (fe *FpExtractor[FR, G1El, G2El]) Define(api frontend.API) error {
 	for i := 0; i < len(fpBytes); i++ {
 		api.Println("fp[", i, "] = ", fpBytes[i].Val)
 	}
-	api.Println(fp)
 
 	return nil
 }

@@ -32,38 +32,16 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	fpFixed.AssertIsEqual(api, vkeyFp)
 
 	// constraint witness against BeginID & EndID
-	vLen := len(up.BeginID.Vals)
-	lLen := len(up.BeginID.Vals[0].Limbs)
-	err = assertWitness[FR](api, up.BeginID, witness.Public[:vLen*lLen])
+	nbEles := len(up.BeginID.Vals)
+	nbLimbs := len(up.BeginID.Vals[0].Limbs)
+	err = assertIDWitness[FR](api, up.BeginID, witness.Public[:nbEles*nbLimbs])
 	if err != nil {
 		return err
 	}
-	err = assertWitness[FR](api, up.EndID, witness.Public[vLen*lLen:])
+	err = assertIDWitness[FR](api, up.EndID, witness.Public[nbEles*nbLimbs:])
 	if err != nil {
 		return err
 	}
 
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
-}
-
-// FIXME skip actual value assertion for now
-func assertWitness[FR emulated.FieldParams](api frontend.API, id LinkageID[FR], witnessValues []emulated.Element[FR]) error {
-	api.AssertIsEqual(len(witnessValues), len(id.Vals)*len(id.Vals[0].Limbs))
-	// field, err := emulated.NewField[FR](api)
-	// if err != nil {
-	// 	return err
-	// }
-
-	for i := 0; i < len(id.Vals); i++ {
-		for j := 0; j < len(id.Vals[0].Limbs); j++ {
-			// l := id.BitsPerElement / len(id.Vals[0].Limbs)
-			vId := id.Vals[i].Limbs[j]
-			api.Println(vId)
-
-			vWit := witnessValues[i*len(id.Vals)+j]
-			api.Println(vWit)
-		}
-	}
-
-	return nil
 }

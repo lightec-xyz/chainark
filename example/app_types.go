@@ -39,6 +39,19 @@ const IDLength = 2 // linkage id is sha256, thus 256 bits = 128 * 2
 const FingerPrintBitsPerElement = 128
 const FpLength = 2
 
+func GetUnitFpBytes() []byte {
+	// computed with the fp/fp_unit utility, before computing you need to at least compute the verification key for the unit circuit by running unit --setup
+	return []byte{3, 65, 71, 15, 176, 248, 28, 94, 225, 35, 137, 51, 17, 224, 65, 157, 226, 249, 127, 36, 13, 145, 248, 183, 40, 26, 145, 198, 134, 205, 148, 14}
+}
+func GetGenesisFpBytes() []byte {
+	// same, genesis --setup first, then fp_genesis
+	return []byte{172, 235, 87, 47, 43, 195, 99, 155, 185, 147, 97, 215, 71, 173, 217, 247, 28, 63, 139, 50, 8, 79, 179, 47, 50, 169, 223, 236, 127, 11, 115, 27}
+}
+func GetRecursiveFpBytes() []byte {
+	// same
+	return []byte{174, 47, 78, 205, 192, 66, 254, 115, 48, 1, 34, 129, 36, 215, 36, 86, 29, 72, 247, 84, 139, 229, 72, 23, 255, 223, 251, 36, 179, 77, 35, 33}
+}
+
 type UnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
 	BeginID chainark.LinkageID[FR] `gnark:",public"`
 	EndID   chainark.LinkageID[FR] `gnark:",public"`
@@ -69,7 +82,7 @@ func (uc *UnitCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 }
 
 func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine],
-	[]byte, []byte, constraint.ConstraintSystem, constraint.ConstraintSystem) {
+	[]byte, constraint.ConstraintSystem, constraint.ConstraintSystem) {
 	unit := UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		BeginID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](IDLength, LinkageIDBitsPerElement),
 		EndID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](IDLength, LinkageIDBitsPerElement),
@@ -97,9 +110,6 @@ func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, 
 	genesisBytes := make([]byte, len(genesisHex)/2)
 	hex.Decode(genesisBytes, []byte(genesisHex))
 
-	// computed with the fp/fp_unit utility, before computing you need to at least compute the verification key for the unit circuit
-	unitFpBytes := []byte{3, 65, 71, 15, 176, 248, 28, 94, 225, 35, 137, 51, 17, 224, 65, 157, 226, 249, 127, 36, 13, 145, 248, 183, 40, 26, 145, 198, 134, 205, 148, 14}
-
 	genesis := chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		UnitVKey:          recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
 		FirstProof:        recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
@@ -113,7 +123,7 @@ func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, 
 		FirstWitness:  recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
 		SecondWitness: recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
 
-		UnitVkeyFpBytes: unitFpBytes,
+		UnitVkeyFpBytes: GetUnitFpBytes(),
 		GenesisIDBytes:  genesisBytes,
 		InnerField:      ecc.BN254.ScalarField(),
 	}
@@ -122,5 +132,5 @@ func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, 
 	if err != nil {
 		panic(err)
 	}
-	return recursiveUnitVkey, genesisBytes, unitFpBytes, ccsGenesis, ccsUnit
+	return recursiveUnitVkey, genesisBytes, ccsGenesis, ccsUnit
 }

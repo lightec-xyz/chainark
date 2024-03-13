@@ -14,7 +14,7 @@ type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 	FirstProof  plonk.Proof[FR, G1El, G2El]
 	SecondProof plonk.Proof[FR, G1El, G2El]
 
-	AcceptableFirstFp FingerPrint[FR] `gnark:",public"` // only there to keep the genesis public witness in alignment with that of recursive
+	AcceptableFirstFp FingerPrint[FR] `gnark:",public"` // only there to keep the shape of genesis public witness in alignment with that of recursive
 
 	GenesisID     LinkageID[FR] `gnark:",public"`
 	FirstID       LinkageID[FR]
@@ -30,24 +30,15 @@ type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 	InnerField *big.Int `gnark:"-"`
 }
 
+// TODO aggregated verification optimization
+// Note that AcceptableFirstFp is only there for shaping purpose, therefore no verification needed here
 func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	verifier, err := plonk.NewVerifier[FR, G1El, G2El, GtEl](api)
 	if err != nil {
 		return err
 	}
 
-	vkeyFp, err := c.UnitVKey.FingerPrint(api)
-	if err != nil {
-		return err
-	}
-	fp, err := FpValueOf[FR](api, vkeyFp, c.AcceptableFirstFp.BitsPerElement)
-	if err != nil {
-		return err
-	}
-	c.AcceptableFirstFp.AssertIsEqual(api, fp)
-
-	// TODO aggregated verification
-
+	// make sure we are using the correct Unit verification key
 	fpFixed := FingerPrintFromBytes[FR](c.UnitVkeyFpBytes, c.AcceptableFirstFp.BitsPerElement)
 
 	// assert the first proof

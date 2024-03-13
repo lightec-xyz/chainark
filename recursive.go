@@ -39,10 +39,6 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		return err
 	}
 
-	// leave to individual recursive verification:
-	// genesis circuit: constraint FirstWitness against (BeginID, RelayID)
-	// unit circuit: constraint SecondWitness against (RelayID, EndID)
-
 	// assert the first proof
 	gOrR := GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]{
 		BeginID: c.BeginID,
@@ -80,10 +76,8 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	proof plonk.Proof[FR, G1El, G2El],
 	field *big.Int) error {
 
-	// we only accept the verification key if either holds:
-	// 1. that its fingerprint matches the fp of RecursiveCircuit verification key
-	// 2. that its fingerprint matches the fp of GenesisCircuit verification key,
-	//    AND the begin linkage ID matches the genesis linkage ID
+	// see README / Soundness Diagram for detailed security analysis
+	// 1. ensure that vkey.FingerPrint matches either the hardcoded Genesis VKey Fp, or the acceptableFp
 	fp, err := vkey.FingerPrint(api)
 	if err != nil {
 		return err
@@ -92,6 +86,7 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	if err != nil {
 		return err
 	}
+
 	recursiveFpTest, err := vkeyFp.IsEqual(api, acceptableFp)
 	if err != nil {
 		return err
@@ -105,19 +100,31 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	}
 	api.Println(genesisFpTest)
 
-	genesisId := LinkageIDFromBytes[FR](genesisIdBytes, rp.BeginID.BitsPerElement)
-	genesisIdTest, err := rp.BeginID.IsEqual(api, genesisId)
-	if err != nil {
-		return err
-	}
-	genesisTest := api.And(genesisFpTest, genesisIdTest)
-	api.Println(genesisTest)
-
-	firstVkeyTest := api.Or(genesisTest, recursiveFpTest)
+	firstVkeyTest := api.Or(recursiveFpTest, genesisFpTest)
 	api.Println(firstVkeyTest)
 	api.AssertIsEqual(firstVkeyTest, 1)
 
-	// TODO constraint witness against rp.BeginID and rp.EndId
+	// 2. ensure that we have been using the same acceptableFp value, that is, constraint witness against acceptableFp
+	nbFpEles := len(acceptableFp.Vals)
+	nbFpLimbs := len(acceptableFp.Vals[0].Limbs)
+	err = assertFpWitness[FR](api, acceptableFp, witness.Public[:nbFpEles*nbFpLimbs])
+	if err != nil {
+		return err
+	}
+
+	// 3. constraint witness against BeginID & EndID
+	nbIdEles := len(rp.BeginID.Vals)
+	nbIdLimbs := len(rp.BeginID.Vals[0].Limbs)
+	nbAllEles := nbIdEles * nbIdLimbs
+	nbTotal := len(witness.Public)
+	err = assertIDWitness[FR](api, rp.BeginID, witness.Public[nbTotal-nbAllEles*2:nbTotal-nbAllEles])
+	if err != nil {
+		return err
+	}
+	err = assertIDWitness[FR](api, rp.EndID, witness.Public[nbTotal-nbAllEles:nbTotal])
+	if err != nil {
+		return err
+	}
 
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }
