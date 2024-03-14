@@ -59,10 +59,12 @@ Note that the fingerprints of all verification keys have been hardcoded in the [
 5. Go to the `recursive` folder, build the application, run `./recursive --setup` to generate proving key and verification key for the recursive circuit;
 6. Go to the `fp_recursive` folder and run `./fp_recursive`, update the result to the implementation of function `GetRecursiveFpBytes`;
 
+### compute the proofs
+
 Now setup is complete. Run below commands to compute the proof:
 
 7. Go to the `unit` folder, run `./unit_script.sh`;
 8. Go to the `genesis` folder, run `./genesis_script.sh`;
 9. Go to the `recursive` folder, run `./recursive_script.sh`.
 
-Now you have exactly one proof for each and every id.
+Now you have exactly one proof for each and every id: the genesis id is recognized, its successor is proved with a `unit` proof, the next is proved with a `genesis` proof, and the rest with a corresponding `recursive` proof.
