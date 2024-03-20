@@ -5,11 +5,11 @@ import (
 	"github.com/consensys/gnark/std/math/emulated"
 )
 
-func assertIDWitness[FR emulated.FieldParams](api frontend.API, id LinkageID[FR], witnessValues []emulated.Element[FR]) error {
+func AssertIDWitness[FR emulated.FieldParams](api frontend.API, id LinkageID[FR], witnessValues []emulated.Element[FR]) error {
 	return assertElementsVSWitness[FR](api, id.Vals, witnessValues)
 }
 
-func assertFpWitness[FR emulated.FieldParams](api frontend.API, fp FingerPrint[FR], witnessValues []emulated.Element[FR]) error {
+func AssertFpWitness[FR emulated.FieldParams](api frontend.API, fp FingerPrint[FR], witnessValues []emulated.Element[FR]) error {
 	return assertElementsVSWitness[FR](api, fp.Vals, witnessValues)
 }
 

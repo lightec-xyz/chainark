@@ -107,7 +107,7 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	// 2. ensure that we have been using the same acceptableFp value, that is, constraint witness against acceptableFp
 	nbFpEles := len(acceptableFp.Vals)
 	nbFpLimbs := len(acceptableFp.Vals[0].Limbs)
-	err = assertFpWitness[FR](api, acceptableFp, witness.Public[:nbFpEles*nbFpLimbs])
+	err = AssertFpWitness[FR](api, acceptableFp, witness.Public[:nbFpEles*nbFpLimbs])
 	if err != nil {
 		return err
 	}
@@ -117,11 +117,11 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	nbIdLimbs := len(rp.BeginID.Vals[0].Limbs)
 	nbAllEles := nbIdEles * nbIdLimbs
 	nbTotal := len(witness.Public)
-	err = assertIDWitness[FR](api, rp.BeginID, witness.Public[nbTotal-nbAllEles*2:nbTotal-nbAllEles])
+	err = AssertIDWitness[FR](api, rp.BeginID, witness.Public[nbTotal-nbAllEles*2:nbTotal-nbAllEles])
 	if err != nil {
 		return err
 	}
-	err = assertIDWitness[FR](api, rp.EndID, witness.Public[nbTotal-nbAllEles:nbTotal])
+	err = AssertIDWitness[FR](api, rp.EndID, witness.Public[nbTotal-nbAllEles:nbTotal])
 	if err != nil {
 		return err
 	}

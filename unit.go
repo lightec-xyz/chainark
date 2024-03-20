@@ -34,11 +34,11 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	// constraint witness against BeginID & EndID
 	nbEles := len(up.BeginID.Vals)
 	nbLimbs := len(up.BeginID.Vals[0].Limbs)
-	err = assertIDWitness[FR](api, up.BeginID, witness.Public[:nbEles*nbLimbs])
+	err = AssertIDWitness[FR](api, up.BeginID, witness.Public[:nbEles*nbLimbs])
 	if err != nil {
 		return err
 	}
-	err = assertIDWitness[FR](api, up.EndID, witness.Public[nbEles*nbLimbs:])
+	err = AssertIDWitness[FR](api, up.EndID, witness.Public[nbEles*nbLimbs:])
 	if err != nil {
 		return err
 	}
