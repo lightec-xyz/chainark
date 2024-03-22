@@ -126,7 +126,6 @@ func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, 
 		SecondWitness: recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
 
 		UnitVkeyFpBytes: GetUnitFpBytes(),
-		GenesisIDBytes:  GetGenesisIdBytes(),
 		InnerField:      ecc.BN254.ScalarField(),
 	}
 

@@ -58,7 +58,6 @@ func main() {
 		SecondWitness:     recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
 
 		UnitVkeyFpBytes: example.GetUnitFpBytes(),
-		GenesisIDBytes:  example.GetGenesisIdBytes(),
 		InnerField:      ecc.BN254.ScalarField(),
 	}
 	ccsGenesis, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &genesis)

@@ -24,7 +24,6 @@ type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 
 	// some constant values passed from outside
 	UnitVkeyFpBytes FingerPrintBytes
-	GenesisIDBytes  LinkageIDBytes
 
 	// some data field needs from outside
 	InnerField *big.Int `gnark:"-"`
