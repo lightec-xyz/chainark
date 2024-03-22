@@ -26,11 +26,10 @@ type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alg
 
 	// some constant values passed from outside
 	GenesisFpBytes  FingerPrintBytes
-	GenesisIDBytes  LinkageIDBytes
 	UnitVKeyFpBytes FingerPrintBytes
 
 	// some data field needs from outside
-	innerField *big.Int
+	InnerField *big.Int
 }
 
 func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
@@ -45,7 +44,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		EndID:   c.RelayID,
 	}
 	err = gOrR.Assert(api, verifier, c.FirstVKey, c.FirstWitness, c.AcceptableFirstFp, c.GenesisFpBytes,
-		c.GenesisIDBytes, c.UnitVKeyFpBytes, c.FirstProof, c.innerField)
+		c.UnitVKeyFpBytes, c.FirstProof, c.InnerField)
 	if err != nil {
 		return err
 	}
@@ -56,7 +55,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		BeginID: c.RelayID,
 		EndID:   c.EndID,
 	}
-	return unit.Assert(api, verifier, c.SecondVKey, c.SecondProof, c.SecondWitness, fpFixed, c.innerField)
+	return unit.Assert(api, verifier, c.SecondVKey, c.SecondProof, c.SecondWitness, fpFixed, c.InnerField)
 }
 
 type GenesisOrRecursiveProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
@@ -71,7 +70,6 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	witness plonk.Witness[FR],
 	acceptableFp FingerPrint[FR],
 	genesisFpBytes FingerPrintBytes,
-	genesisIdBytes LinkageIDBytes,
 	unitVkeyBytes FingerPrintBytes,
 	proof plonk.Proof[FR, G1El, G2El],
 	field *big.Int) error {

@@ -65,7 +65,6 @@ func main() {
 
 		UnitVKeyFpBytes: example.GetUnitFpBytes(),
 		GenesisFpBytes:  example.GetGenesisFpBytes(),
-		GenesisIDBytes:  example.GetGenesisIdBytes(),
 	}
 	ccsRecursive, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &recursive)
 
