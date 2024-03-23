@@ -1,8 +1,6 @@
 package chainark
 
 import (
-	"math/big"
-
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra"
 	"github.com/consensys/gnark/std/math/emulated"
@@ -20,8 +18,7 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	vkey plonk.VerifyingKey[FR, G1El, G2El],
 	proof plonk.Proof[FR, G1El, G2El],
 	witness plonk.Witness[FR],
-	fpFixed FingerPrint[FR],
-	field *big.Int) error {
+	fpFixed FingerPrint[FR]) error {
 
 	// ensure that we are using the correct verification key
 	fp, err := vkey.FingerPrint(api)

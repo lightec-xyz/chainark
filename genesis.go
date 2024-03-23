@@ -45,7 +45,7 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		BeginID: c.GenesisID,
 		EndID:   c.FirstID,
 	}
-	err = unit1.Assert(api, verifier, c.UnitVKey, c.FirstProof, c.FirstWitness, fpFixed, c.InnerField)
+	err = unit1.Assert(api, verifier, c.UnitVKey, c.FirstProof, c.FirstWitness, fpFixed)
 	if err != nil {
 		return err
 	}
@@ -55,5 +55,5 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		BeginID: c.FirstID,
 		EndID:   c.SecondID,
 	}
-	return unit2.Assert(api, verifier, c.UnitVKey, c.SecondProof, c.SecondWitness, fpFixed, c.InnerField)
+	return unit2.Assert(api, verifier, c.UnitVKey, c.SecondProof, c.SecondWitness, fpFixed)
 }
