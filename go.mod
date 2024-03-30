@@ -3,6 +3,7 @@ module github.com/lightec-xyz/chainark
 go 1.20
 
 require github.com/consensys/gnark v0.9.1
+
 require github.com/consensys/gnark-crypto v0.12.2-0.20240215234832-d72fcb379d3e
 
 require (
@@ -30,4 +31,5 @@ require (
 )
 
 replace github.com/consensys/gnark => github.com/lightec-xyz/gnark v0.0.0-20240314034733-ebea47c7db67
+
 replace github.com/consensys/gnark-crypto => github.com/lightec-xyz/gnark-crypto v0.0.0-20240314062713-0c4d1f3833df
