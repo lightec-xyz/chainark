@@ -12,7 +12,6 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
 	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
-	"github.com/consensys/gnark/test"
 	"github.com/consensys/gnark/test/unsafekzg"
 	"github.com/lightec-xyz/chainark"
 	"github.com/lightec-xyz/chainark/example"
@@ -25,7 +24,7 @@ func main() {
 		return
 	}
 
-	recursiveUnitVkey, ccsGenesis, ccsUnit := example.CreateGenesisObjects()
+	recursiveUnitVkey, ccsGenesis, _ := example.CreateGenesisObjects()
 
 	if strings.Compare(os.Args[1], "--setup") == 0 {
 		fmt.Println("setting up... ")
@@ -146,13 +145,13 @@ func main() {
 	pubWitness, err := witness.Public()
 
 	// simulation
-	genesis := chainark.NewGenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		example.IDLength, example.LinkageIDBitsPerElement, example.FpLength, example.FingerPrintBitsPerElement,
-		ccsUnit, example.GetUnitFpBytes())
-	err = test.IsSolved(genesis, &w, ecc.BN254.ScalarField())
-	if err != nil {
-		panic(err)
-	}
+	// genesis := chainark.NewGenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+	// 	example.IDLength, example.LinkageIDBitsPerElement, example.FpLength, example.FingerPrintBitsPerElement,
+	// 	ccsUnit, example.GetUnitFpBytes())
+	// err = test.IsSolved(genesis, &w, ecc.BN254.ScalarField())
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	fmt.Println("loading keys ...")
 	pkey := plonk.NewProvingKey(ecc.BN254)

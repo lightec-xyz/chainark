@@ -1,12 +1,12 @@
 package chainark
 
 import (
-	"math/big"
-
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra"
 	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/recursion/plonk"
+	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 )
 
 type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
@@ -27,9 +27,6 @@ type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alg
 	// some constant values passed from outside
 	GenesisFpBytes  FingerPrintBytes
 	UnitVKeyFpBytes FingerPrintBytes
-
-	// some data field needs from outside
-	InnerField *big.Int
 }
 
 func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
@@ -44,7 +41,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		EndID:   c.RelayID,
 	}
 	err = gOrR.Assert(api, verifier, c.FirstVKey, c.FirstWitness, c.AcceptableFirstFp, c.GenesisFpBytes,
-		c.UnitVKeyFpBytes, c.FirstProof, c.InnerField)
+		c.UnitVKeyFpBytes, c.FirstProof)
 	if err != nil {
 		return err
 	}
@@ -56,6 +53,31 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		EndID:   c.EndID,
 	}
 	return unit.Assert(api, verifier, c.SecondVKey, c.SecondProof, c.SecondWitness, fpFixed)
+}
+
+func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+	idLength, bitsPerIdVal, fpLength, bitsPerFpVal int,
+	ccsUnit, ccsGenesis constraint.ConstraintSystem,
+	unitFpBytes, genesisFpBytes FingerPrintBytes) frontend.Circuit {
+
+	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
+		FirstVKey:         recursive_plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsGenesis),
+		FirstProof:        recursive_plonk.PlaceholderProof[FR, G1El, G2El](ccsGenesis),
+		AcceptableFirstFp: PlaceholderFingerPrint(fpLength, bitsPerFpVal),
+
+		SecondVKey:  recursive_plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
+		SecondProof: recursive_plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
+
+		BeginID: PlaceholderLinkageID(idLength, bitsPerIdVal),
+		RelayID: PlaceholderLinkageID(idLength, bitsPerIdVal),
+		EndID:   PlaceholderLinkageID(idLength, bitsPerIdVal),
+
+		FirstWitness:  recursive_plonk.PlaceholderWitness[FR](ccsGenesis),
+		SecondWitness: recursive_plonk.PlaceholderWitness[FR](ccsUnit),
+
+		UnitVKeyFpBytes: unitFpBytes,
+		GenesisFpBytes:  genesisFpBytes,
+	}
 }
 
 type GenesisOrRecursiveProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
@@ -71,8 +93,7 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	acceptableFp FingerPrint,
 	genesisFpBytes FingerPrintBytes,
 	unitVkeyBytes FingerPrintBytes,
-	proof plonk.Proof[FR, G1El, G2El],
-	field *big.Int) error {
+	proof plonk.Proof[FR, G1El, G2El]) error {
 
 	// see README / Soundness Diagram for detailed security analysis
 	// 1. ensure that vkey.FingerPrint matches either the hardcoded Genesis VKey Fp, or the acceptableFp

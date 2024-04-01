@@ -28,27 +28,12 @@ func main() {
 
 	recursiveUnitVkey, ccsGenesis, ccsUnit := example.CreateGenesisObjects()
 
-	recursive := chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		FirstVKey:         recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsGenesis),
-		FirstProof:        recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsGenesis),
-		AcceptableFirstFp: chainark.PlaceholderFingerPrint(example.FpLength, example.FingerPrintBitsPerElement),
+	recursive := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		example.IDLength, example.LinkageIDBitsPerElement, example.FpLength, example.FingerPrintBitsPerElement,
+		ccsUnit, ccsGenesis,
+		example.GetUnitFpBytes(), example.GetGenesisFpBytes())
 
-		SecondVKey:  recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
-		SecondProof: recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
-
-		BeginID: chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-		RelayID: chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-		EndID:   chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-
-		FirstWitness:  recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsGenesis),
-		SecondWitness: recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
-
-		UnitVKeyFpBytes: example.GetUnitFpBytes(),
-		GenesisFpBytes:  example.GetGenesisFpBytes(),
-		InnerField:      ecc.BN254.ScalarField(),
-	}
-
-	ccsRecursive, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &recursive)
+	ccsRecursive, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, recursive)
 	if err != nil {
 		panic(err)
 	}
