@@ -12,6 +12,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
 	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
+	"github.com/consensys/gnark/test"
 	"github.com/consensys/gnark/test/unsafekzg"
 	"github.com/lightec-xyz/chainark"
 	"github.com/lightec-xyz/chainark/example"
@@ -24,7 +25,7 @@ func main() {
 		return
 	}
 
-	recursiveUnitVkey, ccsGenesis, _ := example.CreateGenesisObjects()
+	recursiveUnitVkey, ccsGenesis, ccsUnit := example.CreateGenesisObjects()
 
 	if strings.Compare(os.Args[1], "--setup") == 0 {
 		fmt.Println("setting up... ")
@@ -99,9 +100,9 @@ func main() {
 	hex.Decode(id1Bytes, []byte(id1Hex))
 	hex.Decode(id2Bytes, []byte(id2Hex))
 
-	genesisID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](example.GetGenesisIdBytes(), example.LinkageIDBitsPerElement)
-	firstID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id1Bytes, example.LinkageIDBitsPerElement)
-	secondID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id2Bytes, example.LinkageIDBitsPerElement)
+	genesisID := chainark.LinkageIDFromBytes(example.GetGenesisIdBytes(), example.LinkageIDBitsPerElement)
+	firstID := chainark.LinkageIDFromBytes(id1Bytes, example.LinkageIDBitsPerElement)
+	secondID := chainark.LinkageIDFromBytes(id2Bytes, example.LinkageIDBitsPerElement)
 
 	firstAssignment := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		BeginID: genesisID,
@@ -132,7 +133,7 @@ func main() {
 		UnitVKey:          recursiveUnitVkey,
 		FirstProof:        firstRecursiveProof,
 		SecondProof:       secondRecursiveProof,
-		AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
+		AcceptableFirstFp: chainark.FingerPrintFromBytes(example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
 
 		GenesisID: genesisID,
 		FirstID:   firstID,
@@ -143,6 +144,15 @@ func main() {
 	}
 	witness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	pubWitness, err := witness.Public()
+
+	// simulation
+	genesis := chainark.NewGenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		example.IDLength, example.LinkageIDBitsPerElement, example.FpLength, example.FingerPrintBitsPerElement,
+		ccsUnit, example.GetUnitFpBytes())
+	err = test.IsSolved(genesis, &w, ecc.BN254.ScalarField())
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Println("loading keys ...")
 	pkey := plonk.NewProvingKey(ecc.BN254)

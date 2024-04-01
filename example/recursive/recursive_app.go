@@ -31,14 +31,14 @@ func main() {
 	recursive := chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		FirstVKey:         recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsGenesis),
 		FirstProof:        recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsGenesis),
-		AcceptableFirstFp: chainark.PlaceholderFingerPrint[sw_bn254.ScalarField](example.FpLength, example.FingerPrintBitsPerElement),
+		AcceptableFirstFp: chainark.PlaceholderFingerPrint(example.FpLength, example.FingerPrintBitsPerElement),
 
 		SecondVKey:  recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
 		SecondProof: recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
 
-		BeginID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
-		RelayID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
-		EndID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
+		BeginID: chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
+		RelayID: chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
+		EndID:   chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
 
 		FirstWitness:  recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsGenesis),
 		SecondWitness: recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
@@ -125,9 +125,9 @@ func main() {
 	hex.Decode(id1Bytes, []byte(id1Hex))
 	hex.Decode(id2Bytes, []byte(id2Hex))
 
-	genesisID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](example.GetGenesisIdBytes(), example.LinkageIDBitsPerElement)
-	firstID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id1Bytes, example.LinkageIDBitsPerElement)
-	secondID := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](id2Bytes, example.LinkageIDBitsPerElement)
+	genesisID := chainark.LinkageIDFromBytes(example.GetGenesisIdBytes(), example.LinkageIDBitsPerElement)
+	firstID := chainark.LinkageIDFromBytes(id1Bytes, example.LinkageIDBitsPerElement)
+	secondID := chainark.LinkageIDFromBytes(id2Bytes, example.LinkageIDBitsPerElement)
 
 	var firstAssignment frontend.Circuit
 	var firstVkeyFileName string
@@ -135,14 +135,14 @@ func main() {
 	if strings.EqualFold(selector, "-g") {
 		firstVkeyFileName = "../genesis/genesis.vkey"
 		firstAssignment = &chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-			AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
+			AcceptableFirstFp: chainark.FingerPrintFromBytes(example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
 			GenesisID:         genesisID,
 			SecondID:          firstID,
 		}
 	} else {
 		firstVkeyFileName = "recursive.vkey"
 		firstAssignment = &chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-			AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
+			AcceptableFirstFp: chainark.FingerPrintFromBytes(example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
 			BeginID:           genesisID,
 			EndID:             firstID,
 		}
@@ -196,7 +196,7 @@ func main() {
 	w := chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		FirstVKey:         recursiveFirstVkey,
 		FirstProof:        firstRecursiveProof,
-		AcceptableFirstFp: chainark.FingerPrintFromBytes[sw_bn254.ScalarField](example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
+		AcceptableFirstFp: chainark.FingerPrintFromBytes(example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
 
 		SecondVKey:  recursiveUnitVkey,
 		SecondProof: secondRecursiveProof,

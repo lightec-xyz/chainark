@@ -11,240 +11,176 @@ import (
 	"github.com/consensys/gnark/std/recursion/plonk"
 )
 
-type LinkageID[FR emulated.FieldParams] struct {
-	Vals           []emulated.Element[FR]
-	BitsPerElement int
+type LinkageID struct {
+	Vals       []frontend.Variable
+	BitsPerVar int
 }
 type LinkageIDBytes []byte
 
-func NewLinkageID[FR emulated.FieldParams](v []emulated.Element[FR], b int) LinkageID[FR] {
-	return LinkageID[FR]{
-		Vals:           v,
-		BitsPerElement: b,
+func NewLinkageID(v []frontend.Variable, b int) LinkageID {
+	return LinkageID{
+		Vals:       v,
+		BitsPerVar: b,
 	}
 }
-func PlaceholderLinkageID[FR emulated.FieldParams](nbEles, bitsPerElement int) LinkageID[FR] {
-	return LinkageID[FR]{
-		Vals:           make([]emulated.Element[FR], nbEles),
-		BitsPerElement: bitsPerElement,
+func PlaceholderLinkageID(nbEles, bitsPerVar int) LinkageID {
+	return LinkageID{
+		Vals:       make([]frontend.Variable, nbEles),
+		BitsPerVar: bitsPerVar,
 	}
 }
-func (id LinkageID[FR]) AssertIsEqual(api frontend.API, other LinkageID[FR]) error {
-	api.AssertIsEqual(id.BitsPerElement, other.BitsPerElement)
-	return assertElementsEqual[FR](api, id.Vals, other.Vals)
+func (id LinkageID) AssertIsEqual(api frontend.API, other LinkageID) {
+	api.AssertIsEqual(id.BitsPerVar, other.BitsPerVar)
+	api.AssertIsEqual(len(id.Vals), len(other.Vals))
+	for i := 0; i < len(id.Vals); i++ {
+		api.AssertIsEqual(id.Vals[i], other.Vals[i])
+	}
 }
-func (id LinkageID[FR]) IsEqual(api frontend.API, other LinkageID[FR]) (frontend.Variable, error) {
-	api.AssertIsEqual(id.BitsPerElement, other.BitsPerElement)
-	return areElementsEqual[FR](api, id.Vals, other.Vals)
+func (id LinkageID) IsEqual(api frontend.API, other LinkageID) frontend.Variable {
+	api.AssertIsEqual(id.BitsPerVar, other.BitsPerVar)
+	return areVarsEquals(api, id.Vals, other.Vals)
 }
-func (id LinkageID[FR]) ToBytes(api frontend.API) ([]uints.U8, error) {
-	return ElementsToU8s(api, id.Vals, id.BitsPerElement)
+func (id LinkageID) ToBytes(api frontend.API) ([]uints.U8, error) {
+	return ValsToU8s(api, id.Vals, id.BitsPerVar)
 }
 
 // little-endian here
-func LinkageIDFromU8s[FR emulated.FieldParams](api frontend.API, data []uints.U8, bitsPerElement int) (LinkageID[FR], error) {
+func LinkageIDFromU8s(api frontend.API, data []uints.U8, bitsPerVar int) LinkageID {
 	bits := make([]frontend.Variable, len(data)*8)
 	for i := 0; i < len(data); i++ {
 		bs := api.ToBinary(data[i].Val)
 		copy(bits[i*8:(i+1)*8], bs)
 	}
 
-	vals, err := bitsToElements[FR](api, bits, bitsPerElement)
-	if err != nil {
-		return LinkageID[FR]{}, err
+	vals := bitsToVars(api, bits, bitsPerVar)
+
+	return LinkageID{
+		Vals:       vals,
+		BitsPerVar: bitsPerVar,
 	}
-	return LinkageID[FR]{
-		Vals:           vals,
-		BitsPerElement: bitsPerElement,
-	}, nil
 }
-func LinkageIDFromBytes[FR emulated.FieldParams](data LinkageIDBytes, bitsPerElement int) LinkageID[FR] {
-	return LinkageID[FR]{
-		Vals:           ElementsFromBytes[FR](data, bitsPerElement),
-		BitsPerElement: bitsPerElement,
+func LinkageIDFromBytes(data LinkageIDBytes, bitsPerVar int) LinkageID {
+	return LinkageID{
+		Vals:       ValsFromBytes(data, bitsPerVar),
+		BitsPerVar: bitsPerVar,
 	}
 }
 
-type FingerPrint[FR emulated.FieldParams] struct {
-	Vals           []emulated.Element[FR]
-	BitsPerElement int
+type FingerPrint struct {
+	Vals       []frontend.Variable
+	BitsPerVar int
 }
 
 type FingerPrintBytes []byte
 
-func NewFingerPrint[FR emulated.FieldParams](v []emulated.Element[FR], b int) FingerPrint[FR] {
-	return FingerPrint[FR]{
-		Vals:           v,
-		BitsPerElement: b,
+func NewFingerPrint(v []frontend.Variable, b int) FingerPrint {
+	return FingerPrint{
+		Vals:       v,
+		BitsPerVar: b,
 	}
 }
-func PlaceholderFingerPrint[FR emulated.FieldParams](nbEles, bitsPerElement int) FingerPrint[FR] {
-	return FingerPrint[FR]{
-		Vals:           make([]emulated.Element[FR], nbEles),
-		BitsPerElement: bitsPerElement,
+func PlaceholderFingerPrint(nbVars, bitsPerVar int) FingerPrint {
+	return FingerPrint{
+		Vals:       make([]frontend.Variable, nbVars),
+		BitsPerVar: bitsPerVar,
 	}
 }
-func (fp FingerPrint[FR]) AssertIsEqual(api frontend.API, other FingerPrint[FR]) error {
-	api.AssertIsEqual(fp.BitsPerElement, other.BitsPerElement)
-	return assertElementsEqual[FR](api, fp.Vals, other.Vals)
+func (fp FingerPrint) AssertIsEqual(api frontend.API, other FingerPrint) {
+	api.AssertIsEqual(fp.BitsPerVar, other.BitsPerVar)
+	api.AssertIsEqual(len(fp.Vals), len(other.Vals))
+	for i := 0; i < len(fp.Vals); i++ {
+		api.AssertIsEqual(fp.Vals[i], other.Vals[i])
+	}
 }
-func (fp FingerPrint[FR]) IsEqual(api frontend.API, other FingerPrint[FR]) (frontend.Variable, error) {
-	api.AssertIsEqual(fp.BitsPerElement, other.BitsPerElement)
-	return areElementsEqual[FR](api, fp.Vals, other.Vals)
+func (fp FingerPrint) IsEqual(api frontend.API, other FingerPrint) frontend.Variable {
+	api.AssertIsEqual(fp.BitsPerVar, other.BitsPerVar)
+	return areVarsEquals(api, fp.Vals, other.Vals)
 }
 
-func FpValueOf[FR emulated.FieldParams](api frontend.API, v frontend.Variable, bitsPerElement int) (FingerPrint[FR], error) {
+func FpValueOf(api frontend.API, v frontend.Variable, bitsPerVar int) (FingerPrint, error) {
 	bits := api.ToBinary(v)
 
-	eles, err := bitsToElements[FR](api, bits, bitsPerElement)
-	if err != nil {
-		return FingerPrint[FR]{}, err
-	}
-	return FingerPrint[FR]{
-		Vals:           eles,
-		BitsPerElement: bitsPerElement,
+	vals := bitsToVars(api, bits, bitsPerVar)
+	return FingerPrint{
+		Vals:       vals,
+		BitsPerVar: bitsPerVar,
 	}, nil
 }
 
 func TestVkeyFp[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
-	api frontend.API, vkey plonk.VerifyingKey[FR, G1El, G2El], otherFp FingerPrint[FR]) (frontend.Variable, error) {
+	api frontend.API, vkey plonk.VerifyingKey[FR, G1El, G2El], otherFp FingerPrint) (frontend.Variable, error) {
 
 	fpVar, err := vkey.FingerPrint(api)
 	if err != nil {
 		return 0, err
 	}
-	fp, err := FpValueOf[FR](api, fpVar, otherFp.BitsPerElement)
+	fp, err := FpValueOf(api, fpVar, otherFp.BitsPerVar)
 	if err != nil {
 		return 0, err
 	}
-	return fp.IsEqual(api, otherFp)
+	return fp.IsEqual(api, otherFp), nil
 }
 
-func FingerPrintFromBytes[FR emulated.FieldParams](data FingerPrintBytes, bitsPerElement int) FingerPrint[FR] {
-	return FingerPrint[FR]{
-		Vals:           ElementsFromBytes[FR](data, bitsPerElement),
-		BitsPerElement: bitsPerElement,
+func FingerPrintFromBytes(data FingerPrintBytes, bitsPerVar int) FingerPrint {
+	return FingerPrint{
+		Vals:       ValsFromBytes(data, bitsPerVar),
+		BitsPerVar: bitsPerVar,
 	}
 }
 
-func assertElementsEqual[FR emulated.FieldParams](api frontend.API, a, b []emulated.Element[FR]) error {
-	field, err := emulated.NewField[FR](api)
-	if err != nil {
-		return err
-	}
-
-	api.AssertIsEqual(len(a), len(b))
-	for i := 0; i < len(a); i++ {
-		field.AssertIsEqual(&a[i], &b[i])
-	}
-
-	return nil
-}
-
-func areElementsEqual[FR emulated.FieldParams](api frontend.API, a, b []emulated.Element[FR]) (frontend.Variable, error) {
-	field, err := emulated.NewField[FR](api)
-	if err != nil {
-		return nil, err
-	}
-
+func areVarsEquals(api frontend.API, a, b []frontend.Variable) frontend.Variable {
 	api.AssertIsEqual(len(a), len(b))
 	sum := frontend.Variable(1)
 	for i := 0; i < len(a); i++ {
-		d := field.Sub(&a[i], &b[i])
-		z := field.IsZero(d)
-		sum = api.And(sum, z)
+		d := api.Sub(a[i], b[i])
+		t := api.IsZero(d)
+		sum = api.And(sum, t)
 	}
 
-	sum = api.Sub(1, sum)
-
-	return api.IsZero(sum), nil
+	return sum
 }
 
-func bitsToElements[FR emulated.FieldParams](api frontend.API, bits []frontend.Variable, bitsPerElement int) ([]emulated.Element[FR], error) {
-	field, err := emulated.NewField[FR](api)
-	if err != nil {
-		return nil, err
+func bitsToVars(api frontend.API, bits []frontend.Variable, bitsPerVar int) []frontend.Variable {
+
+	vals := make([]frontend.Variable, 0)
+	for i := 0; i < len(bits); i += bitsPerVar {
+		val := api.FromBinary(bits[i : i+bitsPerVar]...)
+		vals = append(vals, val)
 	}
 
-	len := len(bits)
-	r := len % bitsPerElement
-	l := (len - r) / bitsPerElement
-	ret := make([]emulated.Element[FR], l)
-	for i := 0; i < l; i++ {
-		v := bits[i*bitsPerElement : (i+1)*bitsPerElement]
-		ret[i] = *field.FromBits(v...)
-	}
-
-	if r > 0 {
-		v := bits[l*bitsPerElement:]
-		ret = append(ret, *field.FromBits(v...))
-	}
-
-	return ret, nil
+	return vals
 }
 
-func ElementsToU8s[FR emulated.FieldParams](api frontend.API, vals []emulated.Element[FR], bitsPerElement int) ([]uints.U8, error) {
+func ValsToU8s(api frontend.API, vals []frontend.Variable, bitsPerVar int) ([]uints.U8, error) {
 	uapi, err := uints.New[uints.U32](api)
 	if err != nil {
 		return nil, err
 	}
 
-	bytesPerElement := bitsPerElement / 8
-	ret := make([]uints.U8, bytesPerElement*len(vals))
-	var fr FR
-	bitsPerLimb := fr.BitsPerLimb()
-	nbLimbs := bitsPerElement / int(bitsPerLimb)
-	bytesPerLimb := int(bitsPerLimb / 8)
+	bytesPerVar := bitsPerVar / 8
+	ret := make([]uints.U8, bytesPerVar*len(vals))
 	for i := 0; i < len(vals); i++ {
-		for j := 0; j < nbLimbs; j++ {
-			bytes := uapi.ByteArrayValueOf(vals[i].Limbs[j], bytesPerLimb)
-			begin := i*bytesPerElement + j*bytesPerLimb
-			end := begin + bytesPerLimb
-			copy(ret[begin:end], bytes)
-		}
+		bytes := uapi.ByteArrayValueOf(vals[i], bytesPerVar)
+		begin := i * bytesPerVar
+		end := begin + bytesPerVar
+		copy(ret[begin:end], bytes)
 	}
 
 	return ret, nil
 }
 
-func ElementsFromBytes[FR emulated.FieldParams](data []byte, bitsPerElement int) []emulated.Element[FR] {
-	bytesPerElement := bitsPerElement / 8
+func ValsFromBytes(data []byte, bitsPerVar int) []frontend.Variable {
+	bytesPerVar := (bitsPerVar + 7) / 8
+	ret := make([]frontend.Variable, 0)
+	for i := 0; i < len(data); i += bytesPerVar {
+		data := data[i : i+bytesPerVar]
+		tmp := make([]byte, len(data))
+		copy(tmp, data)
+		slices.Reverse[[]byte](tmp)
 
-	var fr FR
-	bytesPerLimb := fr.BitsPerLimb() / 8
-	limbsPerElement := bytesPerElement / int(bytesPerLimb)
-
-	r := len(data) % bytesPerElement
-	nbElements := (len(data) - r) / bytesPerElement
-	if r > 0 {
-		nbElements += 1
-	}
-	elems := make([]emulated.Element[FR], nbElements)
-
-	for i := 0; i < nbElements; i++ {
-		limbs := make([]frontend.Variable, fr.NbLimbs())
-		for j := 0; j < limbsPerElement; j++ {
-			begin := i*bytesPerElement + j*int(bytesPerLimb)
-			end := begin + int(bytesPerLimb)
-			if end > len(data) {
-				end = len(data)
-			}
-			d := data[begin:end]
-
-			tmp := make([]byte, len(d))
-			copy(tmp, d)
-			slices.Reverse[[]byte](tmp)
-
-			bi := big.NewInt(0).SetBytes(tmp)
-			limbs[j] = frontend.Variable(bi)
-		}
-		for j := limbsPerElement; j < int(fr.NbLimbs()); j++ {
-			limbs[j] = frontend.Variable(0)
-		}
-		elems[i] = emulated.Element[FR]{
-			Limbs: limbs,
-		}
+		bi := big.NewInt(0).SetBytes(tmp)
+		ret = append(ret, frontend.Variable(bi))
 	}
 
-	return elems
+	return ret
 }

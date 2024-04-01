@@ -38,8 +38,8 @@ func main() {
 	}
 
 	unit := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
-		EndID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
+		BeginID: chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
+		EndID:   chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
 	}
 	ccsUnit, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &unit)
 

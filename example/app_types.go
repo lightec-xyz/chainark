@@ -36,20 +36,20 @@ const RecursiveProofFile = "recursive.proof"
 const LinkageIDBitsPerElement = 128
 const IDLength = 2 // linkage id is sha256, thus 256 bits = 128 * 2
 
-const FingerPrintBitsPerElement = 128
-const FpLength = 2
+const FingerPrintBitsPerElement = 254
+const FpLength = 1
 
 func GetUnitFpBytes() []byte {
 	// computed with the fp/fp_unit utility, before computing you need to at least compute the verification key for the unit circuit by running unit --setup
-	return []byte{3, 65, 71, 15, 176, 248, 28, 94, 225, 35, 137, 51, 17, 224, 65, 157, 226, 249, 127, 36, 13, 145, 248, 183, 40, 26, 145, 198, 134, 205, 148, 14}
+	return []byte{95, 171, 83, 204, 191, 189, 136, 179, 193, 120, 236, 26, 35, 14, 48, 83, 196, 108, 153, 125, 236, 128, 57, 253, 53, 28, 128, 22, 228, 182, 3, 21}
 }
 func GetGenesisFpBytes() []byte {
 	// same, genesis --setup first, then fp_genesis
-	return []byte{83, 231, 89, 73, 151, 4, 108, 80, 178, 19, 227, 159, 88, 242, 99, 151, 33, 136, 165, 61, 150, 180, 40, 33, 1, 249, 173, 33, 108, 31, 69, 23}
+	return []byte{18, 228, 168, 13, 89, 115, 0, 136, 144, 39, 41, 114, 71, 4, 147, 105, 235, 225, 71, 9, 194, 229, 14, 211, 34, 164, 134, 199, 11, 38, 174, 16}
 }
 func GetRecursiveFpBytes() []byte {
 	// same
-	return []byte{6, 161, 195, 134, 137, 249, 20, 22, 55, 85, 34, 193, 75, 42, 188, 85, 5, 72, 198, 117, 236, 138, 3, 108, 206, 11, 131, 123, 236, 178, 169, 42}
+	return []byte{106, 173, 65, 57, 74, 1, 234, 250, 234, 205, 210, 188, 25, 235, 23, 197, 114, 158, 102, 211, 183, 193, 140, 229, 226, 153, 248, 250, 225, 25, 32, 43}
 }
 func GetGenesisIdBytes() []byte {
 	genesisIdHex := "843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85"
@@ -59,8 +59,8 @@ func GetGenesisIdBytes() []byte {
 }
 
 type UnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	BeginID chainark.LinkageID[FR] `gnark:",public"`
-	EndID   chainark.LinkageID[FR] `gnark:",public"`
+	BeginID chainark.LinkageID `gnark:",public"`
+	EndID   chainark.LinkageID `gnark:",public"`
 	// the rest is application-specific
 }
 
@@ -79,19 +79,17 @@ func (uc *UnitCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 
 	s256.Write(uints.NewU8Array(([]byte)("chainark example")))
 
-	r, err := chainark.LinkageIDFromU8s[FR](api, s256.Sum(), 128)
-	if err != nil {
-		return err
-	}
+	r := chainark.LinkageIDFromU8s(api, s256.Sum(), 128)
 
-	return uc.EndID.AssertIsEqual(api, r)
+	uc.EndID.AssertIsEqual(api, r)
+	return nil
 }
 
 func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine],
 	constraint.ConstraintSystem, constraint.ConstraintSystem) {
 	unit := UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](IDLength, LinkageIDBitsPerElement),
-		EndID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](IDLength, LinkageIDBitsPerElement),
+		BeginID: chainark.PlaceholderLinkageID(IDLength, LinkageIDBitsPerElement),
+		EndID:   chainark.PlaceholderLinkageID(IDLength, LinkageIDBitsPerElement),
 	}
 	ccsUnit, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &unit)
 	if err != nil {
@@ -112,24 +110,11 @@ func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, 
 		panic(err)
 	}
 
-	genesis := chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		UnitVKey:          recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
-		FirstProof:        recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
-		SecondProof:       recursive_plonk.PlaceholderProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),
-		AcceptableFirstFp: chainark.PlaceholderFingerPrint[sw_bn254.ScalarField](FpLength, FingerPrintBitsPerElement),
+	genesis := chainark.NewGenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		IDLength, LinkageIDBitsPerElement, FpLength, FingerPrintBitsPerElement,
+		ccsUnit, GetUnitFpBytes())
 
-		GenesisID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](IDLength, LinkageIDBitsPerElement),
-		FirstID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](IDLength, LinkageIDBitsPerElement),
-		SecondID:  chainark.PlaceholderLinkageID[sw_bn254.ScalarField](IDLength, LinkageIDBitsPerElement),
-
-		FirstWitness:  recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
-		SecondWitness: recursive_plonk.PlaceholderWitness[sw_bn254.ScalarField](ccsUnit),
-
-		UnitVkeyFpBytes: GetUnitFpBytes(),
-		InnerField:      ecc.BN254.ScalarField(),
-	}
-
-	ccsGenesis, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &genesis)
+	ccsGenesis, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, genesis)
 	if err != nil {
 		panic(err)
 	}

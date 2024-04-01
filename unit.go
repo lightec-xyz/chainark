@@ -8,8 +8,8 @@ import (
 )
 
 type UnitProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	BeginID LinkageID[FR]
-	EndID   LinkageID[FR]
+	BeginID LinkageID
+	EndID   LinkageID
 }
 
 func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
@@ -18,27 +18,21 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	vkey plonk.VerifyingKey[FR, G1El, G2El],
 	proof plonk.Proof[FR, G1El, G2El],
 	witness plonk.Witness[FR],
-	fpFixed FingerPrint[FR]) error {
+	fpFixed FingerPrint) error {
 
 	// ensure that we are using the correct verification key
 	fp, err := vkey.FingerPrint(api)
 	if err != nil {
 		return err
 	}
-	vkeyFp, err := FpValueOf[FR](api, fp, fpFixed.BitsPerElement)
+	vkeyFp, err := FpValueOf(api, fp, fpFixed.BitsPerVar)
 	fpFixed.AssertIsEqual(api, vkeyFp)
 
 	// constraint witness against BeginID & EndID
-	nbEles := len(up.BeginID.Vals)
-	nbLimbs := len(up.BeginID.Vals[0].Limbs)
-	err = AssertIDWitness[FR](api, up.BeginID, witness.Public[:nbEles*nbLimbs])
-	if err != nil {
-		return err
-	}
-	err = AssertIDWitness[FR](api, up.EndID, witness.Public[nbEles*nbLimbs:])
-	if err != nil {
-		return err
-	}
+	nbVars := len(up.BeginID.Vals)
+	// nbLimbs := len(witness.Public[0].Limbs)
+	AssertIDWitness(api, up.BeginID, witness.Public[:nbVars])
+	AssertIDWitness(api, up.EndID, witness.Public[nbVars:])
 
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }

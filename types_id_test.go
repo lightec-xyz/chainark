@@ -6,35 +6,32 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
-	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/math/uints"
 	"github.com/consensys/gnark/test"
 	"github.com/lightec-xyz/chainark"
 )
 
 type idCircuit struct {
-	FromBytes chainark.LinkageID[sw_bn254.ScalarField]
+	FromBytes chainark.LinkageID
 	Bytes     []byte
 }
 
 func (c *idCircuit) Define(api frontend.API) error {
-	fromU8s, err := chainark.LinkageIDFromU8s[sw_bn254.ScalarField](api, uints.NewU8Array(c.Bytes), 128) // from U8s
-	if err != nil {
-		return err
-	}
+	fromU8s := chainark.LinkageIDFromU8s(api, uints.NewU8Array(c.Bytes), 128) // from U8s
+	fromU8s.AssertIsEqual(api, c.FromBytes)
 
-	err = fromU8s.AssertIsEqual(api, c.FromBytes)
-	if err != nil {
-		return err
-	}
+	t := fromU8s.IsEqual(api, c.FromBytes)
+	api.AssertIsEqual(t, 1)
 
 	u8s, err := fromU8s.ToBytes(api) // to U8s
+	if err != nil {
+		return err
+	}
 	for i := 0; i < 32; i++ {
 		api.AssertIsEqual(u8s[i].Val, c.Bytes[i])
 	}
 
-	return err
+	return nil
 }
 
 func TestLinkageID(t *testing.T) {
@@ -43,14 +40,11 @@ func TestLinkageID(t *testing.T) {
 	hex.Decode(idBytes, []byte(idHex))
 
 	circuit := idCircuit{
-		FromBytes: chainark.LinkageID[sw_bn254.ScalarField]{
-			Vals:           make([]emulated.Element[sw_bn254.ScalarField], 2),
-			BitsPerElement: 128,
-		},
-		Bytes: idBytes,
+		FromBytes: chainark.PlaceholderLinkageID(2, 128),
+		Bytes:     idBytes,
 	}
 	assert := test.NewAssert(t)
-	idFromBytes := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](idBytes, 128) // from bytes
+	idFromBytes := chainark.LinkageIDFromBytes(idBytes, 128) // from bytes
 	witness := idCircuit{
 		FromBytes: idFromBytes,
 	}

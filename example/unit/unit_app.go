@@ -27,8 +27,8 @@ func main() {
 	}
 
 	circuit := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
-		EndID:   chainark.PlaceholderLinkageID[sw_bn254.ScalarField](example.IDLength, example.LinkageIDBitsPerElement),
+		BeginID: chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
+		EndID:   chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
 	}
 
 	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit)
@@ -85,8 +85,8 @@ func main() {
 	hex.Decode(beginBytes, []byte(beginHex))
 	hex.Decode(endBytes, []byte(endHex))
 
-	bId := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](beginBytes, example.LinkageIDBitsPerElement)
-	eId := chainark.LinkageIDFromBytes[sw_bn254.ScalarField](endBytes, example.LinkageIDBitsPerElement)
+	bId := chainark.LinkageIDFromBytes(beginBytes, example.LinkageIDBitsPerElement)
+	eId := chainark.LinkageIDFromBytes(endBytes, example.LinkageIDBitsPerElement)
 
 	w := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		BeginID: bId,
