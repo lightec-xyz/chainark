@@ -30,7 +30,6 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 
 	// constraint witness against BeginID & EndID
 	nbVars := len(up.BeginID.Vals)
-	// nbLimbs := len(witness.Public[0].Limbs)
 	AssertIDWitness(api, up.BeginID, witness.Public[:nbVars])
 	AssertIDWitness(api, up.EndID, witness.Public[nbVars:])
 

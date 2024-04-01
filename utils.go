@@ -8,14 +8,14 @@ import (
 )
 
 func AssertIDWitness[FR emulated.FieldParams](api frontend.API, id LinkageID, witnessValues []emulated.Element[FR]) {
-	assertValsVSWitness[FR](api, id.Vals, witnessValues)
+	AssertValsVSWtnsElements[FR](api, id.Vals, witnessValues)
 }
 
 func AssertFpWitness[FR emulated.FieldParams](api frontend.API, fp FingerPrint, witnessValues []emulated.Element[FR]) {
-	assertValsVSWitness[FR](api, fp.Vals, witnessValues)
+	AssertValsVSWtnsElements[FR](api, fp.Vals, witnessValues)
 }
 
-func assertValsVSWitness[FR emulated.FieldParams](api frontend.API, vars []frontend.Variable, witnessValues []emulated.Element[FR]) {
+func AssertValsVSWtnsElements[FR emulated.FieldParams](api frontend.API, vars []frontend.Variable, witnessValues []emulated.Element[FR]) {
 	api.AssertIsEqual(len(witnessValues), len(vars))
 
 	var fr FR
