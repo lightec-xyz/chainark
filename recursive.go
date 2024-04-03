@@ -119,12 +119,12 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 
 	// 2. ensure that we have been using the same acceptableFp value, that is, constraint witness against acceptableFp
 	nbFpVars := len(acceptableFp.Vals)
-	AssertFpWitness(api, acceptableFp, witness.Public[:nbFpVars])
+	AssertFpWitness(api, acceptableFp, witness.Public[:nbFpVars], uint(acceptableFp.BitsPerVar))
 
 	// 3. constraint witness against BeginID & EndID
 	nbIdVars := len(rp.BeginID.Vals)
-	AssertIDWitness[FR](api, rp.BeginID, witness.Public[nbFpVars:nbFpVars+nbIdVars])
-	AssertIDWitness[FR](api, rp.EndID, witness.Public[nbFpVars+nbIdVars:])
+	AssertIDWitness[FR](api, rp.BeginID, witness.Public[nbFpVars:nbFpVars+nbIdVars], uint(rp.BeginID.BitsPerVar))
+	AssertIDWitness[FR](api, rp.EndID, witness.Public[nbFpVars+nbIdVars:], uint(rp.EndID.BitsPerVar))
 
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }

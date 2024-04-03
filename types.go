@@ -173,9 +173,9 @@ func ValsFromBytes(data []byte, bitsPerVar int) []frontend.Variable {
 	bytesPerVar := (bitsPerVar + 7) / 8
 	ret := make([]frontend.Variable, 0)
 	for i := 0; i < len(data); i += bytesPerVar {
-		data := data[i : i+bytesPerVar]
-		tmp := make([]byte, len(data))
-		copy(tmp, data)
+		d := data[i : i+bytesPerVar]
+		tmp := make([]byte, len(d))
+		copy(tmp, d)
 		slices.Reverse[[]byte](tmp)
 
 		bi := big.NewInt(0).SetBytes(tmp)

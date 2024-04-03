@@ -30,8 +30,8 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 
 	// constraint witness against BeginID & EndID
 	nbVars := len(up.BeginID.Vals)
-	AssertIDWitness(api, up.BeginID, witness.Public[:nbVars])
-	AssertIDWitness(api, up.EndID, witness.Public[nbVars:])
+	AssertIDWitness(api, up.BeginID, witness.Public[:nbVars], uint(up.BeginID.BitsPerVar))
+	AssertIDWitness(api, up.EndID, witness.Public[nbVars:], uint(up.EndID.BitsPerVar))
 
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }
