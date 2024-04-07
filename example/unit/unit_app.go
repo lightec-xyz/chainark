@@ -20,14 +20,14 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("usage: ./unit --setup")
-		fmt.Println("usage: ./unit beginIdHex endIdHex")
+		fmt.Println("usage: ./unit setup")
+		fmt.Println("usage: ./unit prove beginIdHex endIdHex")
 		return
 	}
 
 	ccs := example.NewUnitCcs()
 
-	if strings.Compare(os.Args[1], "--setup") == 0 {
+	if strings.EqualFold(os.Args[1], "setup") {
 		fmt.Println("setting up... ")
 
 		scs := ccs.(*cs.SparseR1CS)
@@ -64,14 +64,14 @@ func main() {
 	}
 
 	idHexLen := example.IDLength * example.LinkageIDBitsPerElement * 2 / 8
-	if len(os.Args) < 3 || len(os.Args[1]) != idHexLen || len(os.Args[2]) != idHexLen {
-		fmt.Println("usage: ./unit beginIdHex endIdHex\nNote that the Id is some value of SHA256, thus 32 bytes.")
+	if len(os.Args) < 4 || len(os.Args[2]) != idHexLen || len(os.Args[3]) != idHexLen {
+		fmt.Println("usage: ./unit prove beginIdHex endIdHex\nNote that the Id is some value of SHA256, thus 32 bytes.")
 		return
 	}
 
-	beginHex := os.Args[1]
+	beginHex := os.Args[2]
 	beginBytes := make([]byte, len(beginHex)/2)
-	endHex := os.Args[2]
+	endHex := os.Args[3]
 	endBytes := make([]byte, len(endHex)/2)
 	hex.Decode(beginBytes, []byte(beginHex))
 	hex.Decode(endBytes, []byte(endHex))

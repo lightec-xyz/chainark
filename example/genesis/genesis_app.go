@@ -18,17 +18,18 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("usage: ./genesis --setup")
-		fmt.Println("usage: ./genesis firstProofFile secondProofFile Id1 Id2")
+	if len(os.Args) < 3 {
+		fmt.Println("usage: ./genesis setup $unitFp")
+		fmt.Println("usage: ./genesis prove $unitFp $recursiveFp firstProofFile secondProofFile Id1 Id2")
 		return
 	}
 
+	unitFp := example.GetFpBytes(os.Args[2])
 	recursiveUnitVkey := example.LoadUnitVkey()
 	ccsUnit := example.NewUnitCcs()
-	ccsGenesis := example.NewGenesisCcs(ccsUnit, example.GetUnitFpBytes())
+	ccsGenesis := example.NewGenesisCcs(ccsUnit, unitFp)
 
-	if strings.Compare(os.Args[1], "--setup") == 0 {
+	if strings.EqualFold(os.Args[1], "setup") {
 		fmt.Println("setting up... ")
 
 		scs := ccsGenesis.(*cs.SparseR1CS)
@@ -63,13 +64,15 @@ func main() {
 	}
 
 	idHexLen := example.IDLength * example.LinkageIDBitsPerElement * 2 / 8
-	if len(os.Args) < 5 || len(os.Args[3]) != idHexLen || len(os.Args[4]) != idHexLen {
-		fmt.Println("usage: ./genesis firstProofFile secondProofFile Id1 Id2\nNote that the Id is some value of SHA256, thus 32 bytes.")
+	if len(os.Args) < 8 || len(os.Args[6]) != idHexLen || len(os.Args[7]) != idHexLen {
+		fmt.Println("usage: ./genesis prove $unitFp $recursiveFp firstProofFile secondProofFile Id1 Id2\nNote that the Id is some value of SHA256, thus 32 bytes.")
 		return
 	}
 
-	firstProofFileName := os.Args[1]
-	secondProofFileName := os.Args[2]
+	recursiveFp := example.GetFpBytes(os.Args[3])
+
+	firstProofFileName := os.Args[4]
+	secondProofFileName := os.Args[5]
 	firstProofFile, err := os.Open(firstProofFileName)
 	if err != nil {
 		panic(err)
@@ -94,9 +97,9 @@ func main() {
 		panic(err)
 	}
 
-	id1Hex := os.Args[3]
+	id1Hex := os.Args[6]
 	id1Bytes := make([]byte, len(id1Hex)/2)
-	id2Hex := os.Args[4]
+	id2Hex := os.Args[7]
 	id2Bytes := make([]byte, len(id2Hex)/2)
 	hex.Decode(id1Bytes, []byte(id1Hex))
 	hex.Decode(id2Bytes, []byte(id2Hex))
@@ -134,7 +137,7 @@ func main() {
 		UnitVKey:          recursiveUnitVkey,
 		FirstProof:        firstRecursiveProof,
 		SecondProof:       secondRecursiveProof,
-		AcceptableFirstFp: chainark.FingerPrintFromBytes(example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
+		AcceptableFirstFp: chainark.FingerPrintFromBytes(recursiveFp, example.FingerPrintBitsPerElement),
 
 		GenesisID: genesisID,
 		FirstID:   firstID,

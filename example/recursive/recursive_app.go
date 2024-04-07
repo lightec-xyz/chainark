@@ -10,7 +10,6 @@ import (
 	"github.com/consensys/gnark/backend/plonk"
 	cs "github.com/consensys/gnark/constraint/bn254"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/frontend/cs/scs"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
 	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 	"github.com/consensys/gnark/test/unsafekzg"
@@ -19,28 +18,22 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("usage: ./recursive --setup")
-		fmt.Println("usage: ./recursive -g genesisProofFile unitProofFile Id2 Id3")     // the chain is: (genesis, ID1, ID2), ID3, ID4...
-		fmt.Println("usage: ./recursive -r recursiveProofFile unitProofFile Idn Idn+1") // note that genesis ID is implied in both cases
+	if len(os.Args) < 4 {
+		fmt.Println("usage: ./recursive setup $unitFp $genesisFp")
+		fmt.Println("usage: ./recursive prove $unitFp $genesisFp $recursiveFp -g genesisProofFile unitProofFile Id2 Id3")     // the chain is: (genesis, ID1, ID2), ID3, ID4...
+		fmt.Println("usage: ./recursive prove $unitFp $genesisFp $recursiveFp -r recursiveProofFile unitProofFile Idn Idn+1") // note that genesis ID is implied in both cases
 		return
 	}
 
+	unitFp := example.GetFpBytes(os.Args[2])
+	genesisFp := example.GetFpBytes(os.Args[3])
+
 	recursiveUnitVkey := example.LoadUnitVkey()
 	ccsUnit := example.NewUnitCcs()
-	ccsGenesis := example.NewGenesisCcs(ccsUnit, example.GetUnitFpBytes())
+	ccsGenesis := example.NewGenesisCcs(ccsUnit, unitFp)
+	ccsRecursive := example.NewRecursiveCcs(ccsUnit, ccsGenesis, unitFp, genesisFp)
 
-	recursive := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		example.IDLength, example.LinkageIDBitsPerElement, example.FpLength, example.FingerPrintBitsPerElement,
-		ccsUnit, ccsGenesis,
-		example.GetUnitFpBytes(), example.GetGenesisFpBytes())
-
-	ccsRecursive, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, recursive)
-	if err != nil {
-		panic(err)
-	}
-
-	if strings.Compare(os.Args[1], "--setup") == 0 {
+	if strings.EqualFold(os.Args[1], "setup") {
 		fmt.Println("setting up... ")
 
 		scs := ccsRecursive.(*cs.SparseR1CS)
@@ -73,14 +66,16 @@ func main() {
 	}
 
 	idHexLen := example.IDLength * example.LinkageIDBitsPerElement * 2 / 8
-	if len(os.Args) < 6 || len(os.Args[4]) != idHexLen || len(os.Args[5]) != idHexLen {
-		fmt.Println("usage: ./recursive -g genesisProofFile unitProofFile Id2 Id3\nNote that the Id is some value of SHA256, thus 32 bytes.")
-		fmt.Println("usage: ./recursive -r recursiveProofFile unitProofFile Idn Idn+1")
+	if len(os.Args) < 10 || len(os.Args[8]) != idHexLen || len(os.Args[9]) != idHexLen {
+		fmt.Println("usage: ./recursive prove $unitFp $genesisFp $recursiveFp -g genesisProofFile unitProofFile Id2 Id3\nNote that the Id is some value of SHA256, thus 32 bytes.")
+		fmt.Println("usage: ./recursive prove $unitFp $genesisFp $recursiveFp -r recursiveProofFile unitProofFile Idn Idn+1")
 		return
 	}
 
-	firstProofFileName := os.Args[2]
-	secondProofFileName := os.Args[3]
+	recursiveFp := example.GetFpBytes(os.Args[4])
+
+	firstProofFileName := os.Args[6]
+	secondProofFileName := os.Args[7]
 	firstProofFile, err := os.Open(firstProofFileName)
 	if err != nil {
 		panic(err)
@@ -105,9 +100,9 @@ func main() {
 		panic(err)
 	}
 
-	id1Hex := os.Args[4]
+	id1Hex := os.Args[8]
 	id1Bytes := make([]byte, len(id1Hex)/2)
-	id2Hex := os.Args[5]
+	id2Hex := os.Args[9]
 	id2Bytes := make([]byte, len(id2Hex)/2)
 	hex.Decode(id1Bytes, []byte(id1Hex))
 	hex.Decode(id2Bytes, []byte(id2Hex))
@@ -118,18 +113,18 @@ func main() {
 
 	var firstAssignment frontend.Circuit
 	var firstVkeyFileName string
-	selector := string(os.Args[1])
+	selector := string(os.Args[5])
 	if strings.EqualFold(selector, "-g") {
 		firstVkeyFileName = "../genesis/genesis.vkey"
 		firstAssignment = &chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-			AcceptableFirstFp: chainark.FingerPrintFromBytes(example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
+			AcceptableFirstFp: chainark.FingerPrintFromBytes(recursiveFp, example.FingerPrintBitsPerElement),
 			GenesisID:         genesisID,
 			SecondID:          firstID,
 		}
 	} else {
 		firstVkeyFileName = "recursive.vkey"
 		firstAssignment = &chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-			AcceptableFirstFp: chainark.FingerPrintFromBytes(example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
+			AcceptableFirstFp: chainark.FingerPrintFromBytes(recursiveFp, example.FingerPrintBitsPerElement),
 			BeginID:           genesisID,
 			EndID:             firstID,
 		}
@@ -183,7 +178,7 @@ func main() {
 	w := chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		FirstVKey:         recursiveFirstVkey,
 		FirstProof:        firstRecursiveProof,
-		AcceptableFirstFp: chainark.FingerPrintFromBytes(example.GetRecursiveFpBytes(), example.FingerPrintBitsPerElement),
+		AcceptableFirstFp: chainark.FingerPrintFromBytes(recursiveFp, example.FingerPrintBitsPerElement),
 
 		SecondVKey:  recursiveUnitVkey,
 		SecondProof: secondRecursiveProof,
