@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/kzg"
 	"github.com/consensys/gnark/backend/plonk"
@@ -17,31 +15,9 @@ import (
 )
 
 func main() {
-	var unitVkeyFileName string
-	if len(os.Args) == 2 {
-		unitVkeyFileName = os.Args[1]
-	} else {
-		unitVkeyFileName = "../unit/unit.vkey"
-	}
+	recursiveUnitVkey := example.LoadUnitVkey()
 
-	unitVkeyFile, err := os.Open(unitVkeyFileName)
-	if err != nil {
-		panic(err)
-	}
-	unitVkey := plonk.NewVerifyingKey(ecc.BN254)
-	unitVkey.ReadFrom(unitVkeyFile)
-	unitVkeyFile.Close()
-
-	recursiveUnitVkey, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](unitVkey)
-	if err != nil {
-		panic(err)
-	}
-
-	unit := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-		EndID:   chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-	}
-	ccsUnit, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &unit)
+	ccsUnit := example.NewUnitCcs()
 
 	extractor := chainark.FpExtractor[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine]{
 		Vkey: recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsUnit),

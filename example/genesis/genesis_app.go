@@ -24,7 +24,9 @@ func main() {
 		return
 	}
 
-	recursiveUnitVkey, ccsGenesis, _ := example.CreateGenesisObjects()
+	recursiveUnitVkey := example.LoadUnitVkey()
+	ccsUnit := example.NewUnitCcs()
+	ccsGenesis := example.NewGenesisCcs(ccsUnit, example.GetUnitFpBytes())
 
 	if strings.Compare(os.Args[1], "--setup") == 0 {
 		fmt.Println("setting up... ")

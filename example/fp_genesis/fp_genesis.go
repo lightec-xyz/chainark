@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/kzg"
 	"github.com/consensys/gnark/backend/plonk"
@@ -17,39 +15,10 @@ import (
 )
 
 func main() {
-	var genesisVkeyFileName string
-	if len(os.Args) == 2 {
-		genesisVkeyFileName = os.Args[1]
-	} else {
-		genesisVkeyFileName = "../genesis/genesis.vkey"
-	}
+	recursiveGenesisVkey := example.LoadGenesisVkey()
 
-	genesisVkeyFile, err := os.Open(genesisVkeyFileName)
-	if err != nil {
-		panic(err)
-	}
-	genesisVkey := plonk.NewVerifyingKey(ecc.BN254)
-	genesisVkey.ReadFrom(genesisVkeyFile)
-	genesisVkeyFile.Close()
-
-	recursiveGenesisVkey, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](genesisVkey)
-	if err != nil {
-		panic(err)
-	}
-
-	unit := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-		EndID:   chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-	}
-	ccsUnit, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &unit)
-	if err != nil {
-		panic(err)
-	}
-
-	genesis := chainark.NewGenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		example.IDLength, example.LinkageIDBitsPerElement, example.FpLength, example.FingerPrintBitsPerElement,
-		ccsUnit, example.GetUnitFpBytes())
-	ccsGenesis, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, genesis)
+	ccsUnit := example.NewUnitCcs()
+	ccsGenesis := example.NewGenesisCcs(ccsUnit, example.GetUnitFpBytes())
 
 	extractor := chainark.FpExtractor[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine]{
 		Vkey: recursive_plonk.PlaceholderVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](ccsGenesis),

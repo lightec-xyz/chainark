@@ -26,7 +26,9 @@ func main() {
 		return
 	}
 
-	recursiveUnitVkey, ccsGenesis, ccsUnit := example.CreateGenesisObjects()
+	recursiveUnitVkey := example.LoadUnitVkey()
+	ccsUnit := example.NewUnitCcs()
+	ccsGenesis := example.NewGenesisCcs(ccsUnit, example.GetUnitFpBytes())
 
 	recursive := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		example.IDLength, example.LinkageIDBitsPerElement, example.FpLength, example.FingerPrintBitsPerElement,

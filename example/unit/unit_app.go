@@ -11,7 +11,6 @@ import (
 	"github.com/consensys/gnark/backend/plonk"
 	cs "github.com/consensys/gnark/constraint/bn254"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/frontend/cs/scs"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
 	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 	"github.com/consensys/gnark/test/unsafekzg"
@@ -26,15 +25,7 @@ func main() {
 		return
 	}
 
-	circuit := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-		EndID:   chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-	}
-
-	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit)
-	if err != nil {
-		panic(err)
-	}
+	ccs := example.NewUnitCcs()
 
 	if strings.Compare(os.Args[1], "--setup") == 0 {
 		fmt.Println("setting up... ")
@@ -44,7 +35,7 @@ func main() {
 		var srs, srsLagrange kzg.SRS
 
 		// let's generate the files again
-		srs, srsLagrange, err = unsafekzg.NewSRS(scs, unsafekzg.WithFSCache())
+		srs, srsLagrange, err := unsafekzg.NewSRS(scs, unsafekzg.WithFSCache())
 		if err != nil {
 			panic(err)
 		}

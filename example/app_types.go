@@ -85,38 +85,66 @@ func (uc *UnitCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	return nil
 }
 
-func CreateGenesisObjects() (recursive_plonk.VerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine],
-	constraint.ConstraintSystem, constraint.ConstraintSystem) {
-	unit := UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
+func NewUnitCircuit() frontend.Circuit {
+	return &UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		BeginID: chainark.PlaceholderLinkageID(IDLength, LinkageIDBitsPerElement),
 		EndID:   chainark.PlaceholderLinkageID(IDLength, LinkageIDBitsPerElement),
 	}
-	ccsUnit, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &unit)
+}
+
+func NewUnitCcs() constraint.ConstraintSystem {
+	unit := NewUnitCircuit()
+	ccsUnit, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, unit)
+	if err != nil {
+		panic(err)
+	}
+	return ccsUnit
+}
+
+func NewGenesisCcs(
+	ccsUnit constraint.ConstraintSystem,
+	unitFp chainark.FingerPrintBytes,
+) constraint.ConstraintSystem {
+	genesis := chainark.NewGenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		IDLength, LinkageIDBitsPerElement, FpLength, FingerPrintBitsPerElement,
+		ccsUnit, unitFp)
+
+	ccsGenesis, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, genesis)
 	if err != nil {
 		panic(err)
 	}
 
-	unitVkeyFileName := "../unit/unit.vkey"
-	unitVkeyFile, err := os.Open(unitVkeyFileName)
+	return ccsGenesis
+}
+
+func LoadUnitVkey() recursive_plonk.VerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine] {
+	fileName := "../unit/unit.vkey"
+	return loadVKey(fileName)
+}
+
+func LoadGenesisVkey() recursive_plonk.VerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine] {
+	fileName := "../genesis/genesis.vkey"
+	return loadVKey(fileName)
+}
+
+func LoadRecursiveVkey() recursive_plonk.VerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine] {
+	fileName := "../recursive/recursive.vkey"
+	return loadVKey(fileName)
+}
+
+func loadVKey(file string) recursive_plonk.VerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine] {
+	unitVkeyFile, err := os.Open(file)
+	defer unitVkeyFile.Close()
 	if err != nil {
 		panic(err)
 	}
 	unitVkey := plonk.NewVerifyingKey(ecc.BN254)
 	unitVkey.ReadFrom(unitVkeyFile)
-	unitVkeyFile.Close()
 
 	recursiveUnitVkey, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](unitVkey)
 	if err != nil {
 		panic(err)
 	}
 
-	genesis := chainark.NewGenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		IDLength, LinkageIDBitsPerElement, FpLength, FingerPrintBitsPerElement,
-		ccsUnit, GetUnitFpBytes())
-
-	ccsGenesis, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, genesis)
-	if err != nil {
-		panic(err)
-	}
-	return recursiveUnitVkey, ccsGenesis, ccsUnit
+	return recursiveUnitVkey
 }

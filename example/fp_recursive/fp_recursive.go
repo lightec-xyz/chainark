@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/kzg"
 	"github.com/consensys/gnark/backend/plonk"
@@ -17,36 +15,10 @@ import (
 )
 
 func main() {
-	var recursiveVkeyFileName string
-	if len(os.Args) == 2 {
-		recursiveVkeyFileName = os.Args[1]
-	} else {
-		recursiveVkeyFileName = "../recursive/recursive.vkey"
-	}
+	recursiveRecursiveVkey := example.LoadRecursiveVkey()
 
-	recursiveVkeyFile, err := os.Open(recursiveVkeyFileName)
-	if err != nil {
-		panic(err)
-	}
-	recursiveVkey := plonk.NewVerifyingKey(ecc.BN254)
-	recursiveVkey.ReadFrom(recursiveVkeyFile)
-	recursiveVkeyFile.Close()
-
-	recursiveRecursiveVkey, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](recursiveVkey)
-	if err != nil {
-		panic(err)
-	}
-
-	unit := example.UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-		EndID:   chainark.PlaceholderLinkageID(example.IDLength, example.LinkageIDBitsPerElement),
-	}
-	ccsUnit, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &unit)
-	if err != nil {
-		panic(err)
-	}
-
-	_, ccsGenesis, _ := example.CreateGenesisObjects()
+	ccsUnit := example.NewUnitCcs()
+	ccsGenesis := example.NewGenesisCcs(ccsUnit, example.GetUnitFpBytes())
 
 	recursive := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		example.IDLength, example.LinkageIDBitsPerElement, example.FpLength, example.FingerPrintBitsPerElement,
