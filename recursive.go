@@ -52,7 +52,12 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		BeginID: c.RelayID,
 		EndID:   c.EndID,
 	}
-	return unit.Assert(api, verifier, c.SecondVKey, c.SecondProof, c.SecondWitness, fpFixed)
+	err = unit.AssertRelations(api, c.SecondVKey, c.SecondWitness, fpFixed)
+	if err != nil {
+		return err
+	}
+
+	return verifier.AssertProof(c.SecondVKey, c.SecondProof, c.SecondWitness, plonk.WithCompleteArithmetic())
 }
 
 func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](

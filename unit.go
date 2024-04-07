@@ -12,11 +12,9 @@ type UnitProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2
 	EndID   LinkageID
 }
 
-func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
+func (up *UnitProof[FR, G1El, G2El, GtEl]) AssertRelations(
 	api frontend.API,
-	verifier *plonk.Verifier[FR, G1El, G2El, GtEl],
 	vkey plonk.VerifyingKey[FR, G1El, G2El],
-	proof plonk.Proof[FR, G1El, G2El],
 	witness plonk.Witness[FR],
 	fpFixed FingerPrint) error {
 
@@ -33,5 +31,5 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	AssertIDWitness(api, up.BeginID, witness.Public[:nbVars], uint(up.BeginID.BitsPerVar))
 	AssertIDWitness(api, up.EndID, witness.Public[nbVars:], uint(up.EndID.BitsPerVar))
 
-	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
+	return nil
 }

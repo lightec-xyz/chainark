@@ -26,7 +26,6 @@ type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 	UnitVkeyFpBytes FingerPrintBytes
 }
 
-// TODO aggregated verification optimization
 // Note that AcceptableFirstFp is only there for shaping purpose, therefore no verification needed here
 func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	verifier, err := plonk.NewVerifier[FR, G1El, G2El, GtEl](api)
@@ -42,7 +41,7 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		BeginID: c.GenesisID,
 		EndID:   c.FirstID,
 	}
-	err = unit1.Assert(api, verifier, c.UnitVKey, c.FirstProof, c.FirstWitness, fpFixed)
+	err = unit1.AssertRelations(api, c.UnitVKey, c.FirstWitness, fpFixed)
 	if err != nil {
 		return err
 	}
@@ -52,7 +51,16 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		BeginID: c.FirstID,
 		EndID:   c.SecondID,
 	}
-	return unit2.Assert(api, verifier, c.UnitVKey, c.SecondProof, c.SecondWitness, fpFixed)
+	err = unit2.AssertRelations(api, c.UnitVKey, c.SecondWitness, fpFixed)
+	if err != nil {
+		return err
+	}
+
+	return verifier.AssertSameProofs(
+		c.UnitVKey,
+		[]recursive_plonk.Proof[FR, G1El, G2El]{c.FirstProof, c.SecondProof},
+		[]recursive_plonk.Witness[FR]{c.FirstWitness, c.SecondWitness},
+		plonk.WithCompleteArithmetic())
 }
 
 func NewGenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
