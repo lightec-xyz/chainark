@@ -80,6 +80,30 @@ func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El 
 	}
 }
 
+func NewRecursiveAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+	firstVkey, unitVkey recursive_plonk.VerifyingKey[FR, G1El, G2El],
+	firstProof, secondProof recursive_plonk.Proof[FR, G1El, G2El],
+	firstWitness, secondWitness recursive_plonk.Witness[FR],
+	recursiveFp FingerPrint,
+	genesisId, firstId, secondId LinkageID,
+) frontend.Circuit {
+	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
+		FirstVKey:         firstVkey,
+		FirstProof:        firstProof,
+		AcceptableFirstFp: recursiveFp,
+
+		SecondVKey:  unitVkey,
+		SecondProof: secondProof,
+
+		BeginID: genesisId,
+		RelayID: firstId,
+		EndID:   secondId,
+
+		FirstWitness:  firstWitness,
+		SecondWitness: secondWitness,
+	}
+}
+
 type GenesisOrRecursiveProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
 	BeginID LinkageID
 	EndID   LinkageID

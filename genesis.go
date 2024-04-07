@@ -75,3 +75,25 @@ func NewGenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El al
 		UnitVkeyFpBytes: unitFpBytes,
 	}
 }
+
+func NewGenesisAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+	unitVkey recursive_plonk.VerifyingKey[FR, G1El, G2El],
+	firstProof, secondProof recursive_plonk.Proof[FR, G1El, G2El],
+	firstWitness, secondWitness recursive_plonk.Witness[FR],
+	recursiveFp FingerPrint,
+	genesisId, firstId, secondId LinkageID,
+) frontend.Circuit {
+	return &GenesisCircuit[FR, G1El, G2El, GtEl]{
+		UnitVKey:          unitVkey,
+		FirstProof:        firstProof,
+		SecondProof:       secondProof,
+		AcceptableFirstFp: recursiveFp,
+
+		GenesisID: genesisId,
+		FirstID:   firstId,
+		SecondID:  secondId,
+
+		FirstWitness:  firstWitness,
+		SecondWitness: secondWitness,
+	}
+}

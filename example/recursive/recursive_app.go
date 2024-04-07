@@ -175,22 +175,13 @@ func main() {
 		panic(err)
 	}
 
-	w := chainark.RecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		FirstVKey:         recursiveFirstVkey,
-		FirstProof:        firstRecursiveProof,
-		AcceptableFirstFp: chainark.FingerPrintFromBytes(recursiveFp, example.FingerPrintBitsPerElement),
-
-		SecondVKey:  recursiveUnitVkey,
-		SecondProof: secondRecursiveProof,
-
-		BeginID: genesisID,
-		RelayID: firstID,
-		EndID:   secondID,
-
-		FirstWitness:  firstRecursiveWitness,
-		SecondWitness: secondRecursiveWitness,
-	}
-	witness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
+	w := chainark.NewRecursiveAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		recursiveFirstVkey, recursiveUnitVkey,
+		firstRecursiveProof, secondRecursiveProof, firstRecursiveWitness, secondRecursiveWitness,
+		chainark.FingerPrintFromBytes(recursiveFp, example.FingerPrintBitsPerElement),
+		genesisID, firstID, secondID,
+	)
+	witness, err := frontend.NewWitness(w, ecc.BN254.ScalarField())
 	pubWitness, err := witness.Public()
 
 	fmt.Println("loading keys ...")

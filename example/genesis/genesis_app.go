@@ -133,20 +133,11 @@ func main() {
 		panic(err)
 	}
 
-	w := chainark.GenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		UnitVKey:          recursiveUnitVkey,
-		FirstProof:        firstRecursiveProof,
-		SecondProof:       secondRecursiveProof,
-		AcceptableFirstFp: chainark.FingerPrintFromBytes(recursiveFp, example.FingerPrintBitsPerElement),
-
-		GenesisID: genesisID,
-		FirstID:   firstID,
-		SecondID:  secondID,
-
-		FirstWitness:  firstRecursiveWitness,
-		SecondWitness: secondRecursiveWitness,
-	}
-	witness, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
+	w := chainark.NewGenesisAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		recursiveUnitVkey, firstRecursiveProof, secondRecursiveProof, firstRecursiveWitness, secondRecursiveWitness,
+		chainark.FingerPrintFromBytes(recursiveFp, example.FingerPrintBitsPerElement),
+		genesisID, firstID, secondID)
+	witness, err := frontend.NewWitness(w, ecc.BN254.ScalarField())
 	pubWitness, err := witness.Public()
 
 	// simulation
