@@ -26,20 +26,20 @@ func (c *fpCircuit) Define(api frontend.API) error {
 }
 
 func TestFp(t *testing.T) {
+	assert := test.NewAssert(t)
 	fpHex := "18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f"
-	idBytes := make([]byte, 32)
-	hex.Decode(idBytes, []byte(fpHex))
+	idBytes, err := hex.DecodeString(fpHex)
+	assert.NoError(err)
 
 	circuit := fpCircuit{
 		FromBytes: chainark.PlaceholderFingerPrint(1, 254),
 		Bytes:     idBytes,
 	}
-	assert := test.NewAssert(t)
 	fpFromBytes := chainark.FingerPrintFromBytes(idBytes, 254) // from bytes
 	witness := fpCircuit{
 		FromBytes: fpFromBytes,
 	}
 
-	err := test.IsSolved(&circuit, &witness, ecc.BN254.ScalarField())
+	err = test.IsSolved(&circuit, &witness, ecc.BN254.ScalarField())
 	assert.NoError(err)
 }

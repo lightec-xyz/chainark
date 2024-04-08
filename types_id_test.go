@@ -35,20 +35,20 @@ func (c *idCircuit) Define(api frontend.API) error {
 }
 
 func TestLinkageID(t *testing.T) {
+	assert := test.NewAssert(t)
 	idHex := "18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f"
-	idBytes := make([]byte, 32)
-	hex.Decode(idBytes, []byte(idHex))
+	idBytes, err := hex.DecodeString(idHex)
+	assert.NoError(err)
 
 	circuit := idCircuit{
 		FromBytes: chainark.PlaceholderLinkageID(2, 128),
 		Bytes:     idBytes,
 	}
-	assert := test.NewAssert(t)
 	idFromBytes := chainark.LinkageIDFromBytes(idBytes, 128) // from bytes
 	witness := idCircuit{
 		FromBytes: idFromBytes,
 	}
 
-	err := test.IsSolved(&circuit, &witness, ecc.BN254.ScalarField())
+	err = test.IsSolved(&circuit, &witness, ecc.BN254.ScalarField())
 	assert.NoError(err)
 }

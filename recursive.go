@@ -6,7 +6,6 @@ import (
 	"github.com/consensys/gnark/std/algebra"
 	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/recursion/plonk"
-	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 )
 
 type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
@@ -66,19 +65,19 @@ func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El 
 	unitFpBytes, genesisFpBytes FingerPrintBytes) frontend.Circuit {
 
 	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
-		FirstVKey:         recursive_plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsGenesis),
-		FirstProof:        recursive_plonk.PlaceholderProof[FR, G1El, G2El](ccsGenesis),
+		FirstVKey:         plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsGenesis),
+		FirstProof:        plonk.PlaceholderProof[FR, G1El, G2El](ccsGenesis),
 		AcceptableFirstFp: PlaceholderFingerPrint(fpLength, bitsPerFpVal),
 
-		SecondVKey:  recursive_plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
-		SecondProof: recursive_plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
+		SecondVKey:  plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
+		SecondProof: plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
 
 		BeginID: PlaceholderLinkageID(idLength, bitsPerIdVal),
 		RelayID: PlaceholderLinkageID(idLength, bitsPerIdVal),
 		EndID:   PlaceholderLinkageID(idLength, bitsPerIdVal),
 
-		FirstWitness:  recursive_plonk.PlaceholderWitness[FR](ccsGenesis),
-		SecondWitness: recursive_plonk.PlaceholderWitness[FR](ccsUnit),
+		FirstWitness:  plonk.PlaceholderWitness[FR](ccsGenesis),
+		SecondWitness: plonk.PlaceholderWitness[FR](ccsUnit),
 
 		UnitVKeyFpBytes: unitFpBytes,
 		GenesisFpBytes:  genesisFpBytes,
@@ -86,9 +85,9 @@ func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El 
 }
 
 func NewRecursiveAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
-	firstVkey, unitVkey recursive_plonk.VerifyingKey[FR, G1El, G2El],
-	firstProof, secondProof recursive_plonk.Proof[FR, G1El, G2El],
-	firstWitness, secondWitness recursive_plonk.Witness[FR],
+	firstVkey, unitVkey plonk.VerifyingKey[FR, G1El, G2El],
+	firstProof, secondProof plonk.Proof[FR, G1El, G2El],
+	firstWitness, secondWitness plonk.Witness[FR],
 	recursiveFp FingerPrint,
 	genesisId, firstId, secondId LinkageID,
 ) frontend.Circuit {

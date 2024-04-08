@@ -24,6 +24,9 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) AssertRelations(
 		return err
 	}
 	vkeyFp, err := FpValueOf(api, fp, fpFixed.BitsPerVar)
+	if err != nil {
+		return err
+	}
 	fpFixed.AssertIsEqual(api, vkeyFp)
 
 	// constraint witness against BeginID & EndID

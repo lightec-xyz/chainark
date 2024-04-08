@@ -6,7 +6,6 @@ import (
 	"github.com/consensys/gnark/std/algebra"
 	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/recursion/plonk"
-	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 )
 
 type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
@@ -58,8 +57,8 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 
 	return verifier.AssertSameProofs(
 		c.UnitVKey,
-		[]recursive_plonk.Proof[FR, G1El, G2El]{c.FirstProof, c.SecondProof},
-		[]recursive_plonk.Witness[FR]{c.FirstWitness, c.SecondWitness},
+		[]plonk.Proof[FR, G1El, G2El]{c.FirstProof, c.SecondProof},
+		[]plonk.Witness[FR]{c.FirstWitness, c.SecondWitness},
 		plonk.WithCompleteArithmetic())
 }
 
@@ -68,26 +67,26 @@ func NewGenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El al
 	ccsUnit constraint.ConstraintSystem,
 	unitFpBytes FingerPrintBytes) frontend.Circuit {
 	return &GenesisCircuit[FR, G1El, G2El, GtEl]{
-		UnitVKey:          recursive_plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
-		FirstProof:        recursive_plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
-		SecondProof:       recursive_plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
+		UnitVKey:          plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
+		FirstProof:        plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
+		SecondProof:       plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
 		AcceptableFirstFp: PlaceholderFingerPrint(nbFpVals, bitsPerFpVal),
 
 		GenesisID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 		FirstID:   PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 		SecondID:  PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 
-		FirstWitness:  recursive_plonk.PlaceholderWitness[FR](ccsUnit),
-		SecondWitness: recursive_plonk.PlaceholderWitness[FR](ccsUnit),
+		FirstWitness:  plonk.PlaceholderWitness[FR](ccsUnit),
+		SecondWitness: plonk.PlaceholderWitness[FR](ccsUnit),
 
 		UnitVkeyFpBytes: unitFpBytes,
 	}
 }
 
 func NewGenesisAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
-	unitVkey recursive_plonk.VerifyingKey[FR, G1El, G2El],
-	firstProof, secondProof recursive_plonk.Proof[FR, G1El, G2El],
-	firstWitness, secondWitness recursive_plonk.Witness[FR],
+	unitVkey plonk.VerifyingKey[FR, G1El, G2El],
+	firstProof, secondProof plonk.Proof[FR, G1El, G2El],
+	firstWitness, secondWitness plonk.Witness[FR],
 	recursiveFp FingerPrint,
 	genesisId, firstId, secondId LinkageID,
 ) frontend.Circuit {
