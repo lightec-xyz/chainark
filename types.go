@@ -1,7 +1,6 @@
 package chainark
 
 import (
-	"math/big"
 	"slices"
 
 	"github.com/consensys/gnark/frontend"
@@ -48,7 +47,7 @@ func (id LinkageID) ToBytes(api frontend.API) ([]uints.U8, error) {
 func LinkageIDFromU8s(api frontend.API, data []uints.U8, bitsPerVar int) LinkageID {
 	bits := make([]frontend.Variable, len(data)*8)
 	for i := 0; i < len(data); i++ {
-		bs := api.ToBinary(data[i].Val)
+		bs := api.ToBinary(data[i].Val, 8)
 		copy(bits[i*8:(i+1)*8], bs)
 	}
 
@@ -173,13 +172,10 @@ func ValsFromBytes(data []byte, bitsPerVar int) []frontend.Variable {
 	bytesPerVar := (bitsPerVar + 7) / 8
 	ret := make([]frontend.Variable, 0)
 	for i := 0; i < len(data); i += bytesPerVar {
-		d := data[i : i+bytesPerVar]
-		tmp := make([]byte, len(d))
-		copy(tmp, d)
+		tmp := make([]byte, bytesPerVar)
+		copy(tmp, data[i:i+bytesPerVar])
 		slices.Reverse[[]byte](tmp)
-
-		bi := big.NewInt(0).SetBytes(tmp)
-		ret = append(ret, frontend.Variable(bi))
+		ret = append(ret, tmp)
 	}
 
 	return ret
