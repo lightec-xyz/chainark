@@ -39,8 +39,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		BeginID: c.BeginID,
 		EndID:   c.RelayID,
 	}
-	err = gOrR.Assert(api, verifier, c.FirstVKey, c.FirstWitness, c.AcceptableFirstFp, c.GenesisFpBytes,
-		c.UnitVKeyFpBytes, c.FirstProof)
+	err = gOrR.Assert(api, verifier, c.FirstVKey, c.FirstWitness, c.AcceptableFirstFp, c.GenesisFpBytes, c.FirstProof)
 	if err != nil {
 		return err
 	}
@@ -120,7 +119,6 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	witness plonk.Witness[FR],
 	acceptableFp FingerPrint,
 	genesisFpBytes FingerPrintBytes,
-	unitVkeyBytes FingerPrintBytes,
 	proof plonk.Proof[FR, G1El, G2El]) error {
 
 	// see README / Soundness Diagram for detailed security analysis
