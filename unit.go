@@ -32,7 +32,7 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) AssertRelations(
 	// constraint witness against BeginID & EndID
 	nbVars := len(up.BeginID.Vals)
 	AssertIDWitness(api, up.BeginID, witness.Public[:nbVars], uint(up.BeginID.BitsPerVar))
-	AssertIDWitness(api, up.EndID, witness.Public[nbVars:], uint(up.EndID.BitsPerVar))
+	AssertIDWitness(api, up.EndID, witness.Public[nbVars:nbVars*2], uint(up.EndID.BitsPerVar))
 
 	return nil
 }
