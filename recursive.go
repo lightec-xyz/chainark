@@ -150,7 +150,7 @@ func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	// 3. constraint witness against BeginID & EndID
 	nbIdVars := len(rp.BeginID.Vals)
 	AssertIDWitness[FR](api, rp.BeginID, witness.Public[nbFpVars:nbFpVars+nbIdVars], uint(rp.BeginID.BitsPerVar))
-	AssertIDWitness[FR](api, rp.EndID, witness.Public[nbFpVars+nbIdVars:], uint(rp.EndID.BitsPerVar))
+	AssertIDWitness[FR](api, rp.EndID, witness.Public[nbFpVars+nbIdVars:nbFpVars+nbIdVars*2], uint(rp.EndID.BitsPerVar))
 
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }
