@@ -1,0 +1,36 @@
+package common
+
+import (
+	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/math/emulated"
+	"github.com/lightec-xyz/chainark"
+)
+
+func AssertIDWitness[FR emulated.FieldParams](api frontend.API, id chainark.LinkageID[FR], witnessValues []emulated.Element[FR]) error {
+	return assertElementsVSWitness[FR](api, id.Vals, witnessValues)
+}
+
+func AssertFpWitness[FR emulated.FieldParams](api frontend.API, fp chainark.FingerPrint[FR], witnessValues []emulated.Element[FR]) error {
+	return assertElementsVSWitness[FR](api, fp.Vals, witnessValues)
+}
+
+func assertElementsVSWitness[FR emulated.FieldParams](api frontend.API, eles []emulated.Element[FR], witnessValues []emulated.Element[FR]) error {
+	nbEles := len(eles)
+	nbLimbsPerEle := len(eles[0].Limbs)
+	api.AssertIsEqual(len(witnessValues), nbEles*nbLimbsPerEle)
+
+	for i := 0; i < nbEles; i++ {
+		for j := 0; j < nbLimbsPerEle; j++ {
+			ele := eles[i].Limbs[j]
+			wLimbs := witnessValues[i*nbLimbsPerEle+j].Limbs
+
+			api.AssertIsEqual(ele, wLimbs[0])
+			for k := 1; k < len(wLimbs); k++ {
+				api.AssertIsEqual(wLimbs[k], 0)
+			}
+		}
+	}
+
+	return nil
+
+}
