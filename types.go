@@ -178,5 +178,6 @@ func ValsFromBytes(data []byte, bitsPerVar int) []frontend.Variable {
 		ret = append(ret, tmp)
 	}
 
+	slices.Reverse[[]frontend.Variable](ret)
 	return ret
 }
