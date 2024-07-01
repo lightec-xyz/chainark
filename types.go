@@ -40,7 +40,11 @@ func (id LinkageID) IsEqual(api frontend.API, other LinkageID) frontend.Variable
 	return areVarsEquals(api, id.Vals, other.Vals)
 }
 func (id LinkageID) ToBytes(api frontend.API) ([]uints.U8, error) {
-	return ValsToU8s(api, id.Vals, id.BitsPerVar)
+	vals := make([]frontend.Variable, len(id.Vals))
+	copy(vals, id.Vals)
+	slices.Reverse[[]frontend.Variable](vals)
+
+	return ValsToU8s(api, vals, id.BitsPerVar)
 }
 
 // little-endian here
@@ -147,6 +151,7 @@ func bitsToVars(api frontend.API, bits []frontend.Variable, bitsPerVar int) []fr
 		vals = append(vals, val)
 	}
 
+	slices.Reverse[[]frontend.Variable](vals)
 	return vals
 }
 
