@@ -5,24 +5,25 @@ import (
 
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/emulated"
+	"github.com/consensys/gnark/std/rangecheck"
 )
 
 func AssertIDWitness[FR emulated.FieldParams](
-	api frontend.API, id LinkageID, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
+	api frontend.API, id LinkageID, els []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) {
-	AssertValsVSWtnsElements[FR](api, id.Vals, witnessValues, nbMaxBitsPerVar...)
+	AssertValsWithWitnessElements[FR](api, id.Vals, els, nbMaxBitsPerVar...)
 }
 
 func AssertFpWitness[FR emulated.FieldParams](
-	api frontend.API, fp FingerPrint, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
+	api frontend.API, fp FingerPrint, els []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) {
-	AssertValsVSWtnsElements[FR](api, fp.Vals, witnessValues, nbMaxBitsPerVar...)
+	AssertValsWithWitnessElements[FR](api, fp.Vals, els, nbMaxBitsPerVar...)
 }
 
-func AssertValsVSWtnsElements[FR emulated.FieldParams](
-	api frontend.API, vars []frontend.Variable, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
+func AssertValsWithWitnessElements[FR emulated.FieldParams](
+	api frontend.API, vars []frontend.Variable, els []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) {
-	api.AssertIsEqual(len(witnessValues), len(vars))
+	api.AssertIsEqual(len(els), len(vars))
 
 	var fr FR
 	var maxBits int
@@ -36,9 +37,9 @@ func AssertValsVSWtnsElements[FR emulated.FieldParams](
 
 	nbEffectiveLimbs := int((maxBits + bitsPerLimb - 1) / bitsPerLimb)
 
-	for i := 0; i < len(witnessValues); i++ {
+	for i := 0; i < len(els); i++ {
 		for j := nbEffectiveLimbs; j < int(fr.NbLimbs()); j++ {
-			api.AssertIsEqual(witnessValues[i].Limbs[j], 0)
+			api.AssertIsEqual(els[i].Limbs[j], 0)
 		}
 	}
 
@@ -48,7 +49,7 @@ func AssertValsVSWtnsElements[FR emulated.FieldParams](
 	}
 
 	for i := 0; i < len(vars); i++ {
-		eleLimbs := witnessValues[i].Limbs
+		eleLimbs := els[i].Limbs
 		composed := eleLimbs[nbEffectiveLimbs-1]
 		for j := nbEffectiveLimbs - 2; j >= 0; j-- {
 			v := api.Mul(composed, constFactor)
@@ -60,15 +61,15 @@ func AssertValsVSWtnsElements[FR emulated.FieldParams](
 }
 
 func IsIDEqualToWitness[FR emulated.FieldParams](
-	api frontend.API, id LinkageID, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
+	api frontend.API, id LinkageID, els []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) frontend.Variable {
-	return TestValsVSWtnsElements[FR](api, id.Vals, witnessValues, nbMaxBitsPerVar...)
+	return TestValsWithWitnessElements[FR](api, id.Vals, els, nbMaxBitsPerVar...)
 }
 
-func TestValsVSWtnsElements[FR emulated.FieldParams](
-	api frontend.API, vars []frontend.Variable, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
+func TestValsWithWitnessElements[FR emulated.FieldParams](
+	api frontend.API, vars []frontend.Variable, els []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) frontend.Variable {
-	api.AssertIsEqual(len(witnessValues), len(vars))
+	api.AssertIsEqual(len(els), len(vars))
 
 	var fr FR
 	var maxBits int
@@ -82,9 +83,9 @@ func TestValsVSWtnsElements[FR emulated.FieldParams](
 
 	nbEffectiveLimbs := int((maxBits + bitsPerLimb - 1) / bitsPerLimb)
 
-	for i := 0; i < len(witnessValues); i++ {
+	for i := 0; i < len(els); i++ {
 		for j := nbEffectiveLimbs; j < int(fr.NbLimbs()); j++ {
-			api.AssertIsEqual(witnessValues[i].Limbs[j], 0)
+			api.AssertIsEqual(els[i].Limbs[j], 0)
 		}
 	}
 
@@ -95,7 +96,7 @@ func TestValsVSWtnsElements[FR emulated.FieldParams](
 
 	sum := frontend.Variable(1)
 	for i := 0; i < len(vars); i++ {
-		eleLimbs := witnessValues[i].Limbs
+		eleLimbs := els[i].Limbs
 		composed := eleLimbs[nbEffectiveLimbs-1]
 		for j := nbEffectiveLimbs - 2; j >= 0; j-- {
 			v := api.Mul(composed, constFactor)
@@ -108,4 +109,33 @@ func TestValsVSWtnsElements[FR emulated.FieldParams](
 	}
 
 	return sum
+}
+
+func AssertFpInSet(api frontend.API, fp frontend.Variable, fpSet []FingerPrintBytes, fpBitsPerVar int) {
+	fpv, err := FpValueOf(api, fp, fpBitsPerVar)
+	if err != nil {
+		panic(err)
+	}
+
+	sum := frontend.Variable(0)
+	for i := 0; i < len(fpSet); i++ {
+		v := FingerPrintFromBytes(fpSet[i], fpBitsPerVar)
+		t := fpv.IsEqual(api, v)
+		sum = api.Or(t, sum)
+	}
+	api.AssertIsEqual(sum, 1)
+}
+
+func RetrieveU32ValueFromElement[FR emulated.FieldParams](api frontend.API, e emulated.Element[FR]) frontend.Variable {
+	var fr FR
+	nbLimbs := fr.NbLimbs()
+	for i := 1; i < int(nbLimbs); i++ {
+		api.AssertIsEqual(e.Limbs[i], 0)
+	}
+
+	rcheck := rangecheck.New(api)
+
+	r := e.Limbs[0]
+	rcheck.Check(r, 32)
+	return r
 }
