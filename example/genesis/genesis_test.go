@@ -17,6 +17,7 @@ import (
 	"github.com/lightec-xyz/chainark/example/utils"
 )
 
+// TestGenesis_Simulated only can be runned after unit ccs/pk/vk/proof/wit files are generated
 func TestGenesis_Simulated(t *testing.T) {
 	assert := test.NewAssert(t)
 
