@@ -36,6 +36,6 @@ require (
 )
 
 replace (
-	github.com/consensys/gnark => ../gnark //github.com/lightec-xyz/gnark v0.0.0-20240927063736-bcaeb00302cc // v0.0.0-20240927063736-bcaeb00302cc
+	github.com/consensys/gnark => github.com/lightec-xyz/gnark v0.0.0-20241024072556-66f3c7ecf3b9 // v0.0.0-20240927063736-bcaeb00302cc
 	github.com/consensys/gnark-crypto => github.com/lightec-xyz/gnark-crypto v0.0.0-20240927064131-c1ad5db6d61b // v0.14.0 //v0.0.0-0.20240909142611-e6b99e74cec1
 )
