@@ -10,4 +10,6 @@ a ZKP library to prove a chain of any given relationship, such as block chain, s
 
 <img width="635" alt="image" src="https://github.com/user-attachments/assets/4f782ada-eb07-4222-a4e2-ad8a722e2696">
 
+In this lib, genesis/recursive circuit are defined, unit circuit is defined by user.
+
 
