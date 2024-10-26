@@ -61,8 +61,13 @@ Note that the fingerprints of all verification keys have been hardcoded in the [
 
 Now setup is complete. Run below commands to compute the proof:
 
-7. Go to the `unit` folder, run `./unit_prove.sh`;
-8. Go to the `genesis` folder, run `./genesis_prove.sh`;
-9. Go to the `recursive` folder, run `./recursive_prove.sh`.
+1. Go to the `unit` folder, run `./unit_prove.sh`;
+2. Go to the `genesis` folder, run `./genesis_prove.sh`;
+3. Go to the `recursive` folder, run `./recursive_prove.sh`.
 
 Now you have exactly one proof for each and every id: the genesis id is recognized, its successor is proved with a `unit` proof, the next is proved with a `genesis` proof, and the rest with a corresponding `recursive` proof.
+
+### generate verification keys and compute proofs at once 
+```
+sh run.sh
+```
