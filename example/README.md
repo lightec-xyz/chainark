@@ -36,11 +36,11 @@ Now `data1` becomes `843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb9
 
 ## The proving task
 
-Now we want to prove that following the above hashing computation rule, a hash value of `a1ac83d0e18e0845ced8bcd71be011c011c8cde038b3aa98e4407fe5584acd7e` could be computed starting from the data identified by the `genesis ID` of `843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85`.
+Now we want to prove that following the above hashing computation rule, a hash value of `ad057c8b077361d9f5673d5faa0bf4f6c5013bb5fb745339042329976637a705` could be computed starting from the data identified by the `genesis ID` of `843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85`.
 
-To do this, we first need to generate all the `unit` proofs, that is, we need a ZK-proof from a data item (`hash || "chainark example"`) to an ID (`hash`) for all the IDs from genesis to the one under question. `UnitCircuit` is implemented in the [app_types.go](./app_types.go). Besides unit circuit definition, a main function is defined to generate the unit proofs.
+To do this, we first need to generate the `unit` proofs, that is, we need a ZK-proof from a data item (`hash || "chainark example"`) to an ID (`hash`) for all the IDs from genesis to the one under question. `UnitCircuit` is implemented in the [unit/core/circuit.go]. For demonstration, 4 types unit circuits are defined, each handle 8/4/2/1 hash iteration.  Besides unit circuit definition, a main function in unit/unit.go is defined to generate the unit proofs.
 
-Then we also need to create main functions to output the genesis and recursive proofs. The genesis circuit verifies the first two unit proofs, building the initial chain structure starting from the chosen genesis ID. The recursive circuit verifies first a genesis proof or a recursive proof, then a unit proof. The proof generated from the recursive circuit could be used to verify the existence of a chain from the genesis ID to the one under question.
+Then we also need to create main functions to output the genesis and recursive proofs. The genesis circuit verifies the first unit proof, building the initial chain structure starting from the chosen genesis ID. The recursive circuit verifies first a genesis proof or a recursive proof, then a unit proof. The proof generated from the recursive circuit could be used to verify the existence of a chain from the genesis ID to the one under question.
 
 ## Under the hook
 
@@ -53,18 +53,16 @@ Please refer to the [general doc](../README.md).
 Note that the fingerprints of all verification keys have been hardcoded in the [example codes](./app_types.go). Usually you don't need to worry about it. But if you have modified some of the circuits, or if you are planning to build your own application based on this example, here are general procedures to follow:
 
 1. Go to the `unit` folder, build the application, run `./unit --setup` to generate proving key and verification key for the unit circuit;
-2. Go to the `fp_unit` folder, run `./fp_unit` to compute the fingerprint of the verification key, and update the result to the implementation of function `GetUnitFpBytes()`;
-3. Since the genesis circuit hardcodes the fingerprint of the unit circuit verification key, this has to happen after the step 2: go to the `genesis` folder, build the application, run `./genesis --setup` to generate proving key and verification key for the genesis circuit;
-4. Go to the `fp_genesis` folder and run `./fp_genesis`, update the result to the implementation of function `GetGenesisFpBytes`;
-5. Go to the `recursive` folder, build the application, run `./recursive --setup` to generate proving key and verification key for the recursive circuit;
-6. Go to the `fp_recursive` folder and run `./fp_recursive`, update the result to the implementation of function `GetRecursiveFpBytes`;
+2. Go to the `genesis` folder, build the application, run `./genesis --setup` to generate proving key and verification key for the genesis circuit;
+3. Go to the `recursive` folder, build the application, run `./recursive --setup` to generate proving key and verification key for the recursive circuit;
+
 
 ### compute the proofs
 
 Now setup is complete. Run below commands to compute the proof:
 
-7. Go to the `unit` folder, run `./unit_script.sh`;
-8. Go to the `genesis` folder, run `./genesis_script.sh`;
-9. Go to the `recursive` folder, run `./recursive_script.sh`.
+7. Go to the `unit` folder, run `./unit_prove.sh`;
+8. Go to the `genesis` folder, run `./genesis_prove.sh`;
+9. Go to the `recursive` folder, run `./recursive_prove.sh`.
 
 Now you have exactly one proof for each and every id: the genesis id is recognized, its successor is proved with a `unit` proof, the next is proved with a `genesis` proof, and the rest with a corresponding `recursive` proof.
