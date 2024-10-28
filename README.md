@@ -1,5 +1,5 @@
 # chainark
-a ZKP library to prove a chain of any given relationship, such as block chain, signature chain, etc, which is based on gnark plonk at BN254 curve.
+a ZKP library to prove a chain of any given relationship, such as block chain, signature chain, etc, which is based on gnark plonk.
 
 
 3 kinds circuits are defined:
