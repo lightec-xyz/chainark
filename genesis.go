@@ -17,7 +17,7 @@ type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 	EndID           LinkageID         `gnark:",public"`
 	NbIDs           frontend.Variable `gnark:",public"`
 	NbBitsPerFpVar  int
-	AcceptableVkFps []FingerPrintBytes // only there to keep the shape of genesis public witness in alignment with that of recursive
+	AcceptableVkFps []FingerPrintBytes
 }
 
 // Note that AcceptableFirstFp is only there for shaping purpose, therefore no verification needed here
