@@ -11,13 +11,13 @@ import (
 	"github.com/consensys/gnark/test"
 )
 
-type IDTestCircuit struct {
+type idTestCircuit struct {
 	Eles     [2]emulated.Element[sw_bn254.ScalarField]
 	Id       LinkageID
 	Expected frontend.Variable
 }
 
-func (c *IDTestCircuit) Define(api frontend.API) error {
+func (c *idTestCircuit) Define(api frontend.API) error {
 	t := IsIDEqualToWitness[sw_bn254.ScalarField](api, c.Id, c.Eles[:], 128)
 	api.AssertIsEqual(t, c.Expected)
 
@@ -55,10 +55,10 @@ func TestIdVSWitness(t *testing.T) {
 	}
 	id := LinkageID{Vals: []frontend.Variable{frontend.Variable(bi1), frontend.Variable(bi2)}, BitsPerVar: 128}
 
-	circuit := &IDTestCircuit{
+	circuit := &idTestCircuit{
 		Id: PlaceholderLinkageID(2, 128),
 	}
-	assignment := &IDTestCircuit{
+	assignment := &idTestCircuit{
 		Eles:     eles,
 		Id:       id,
 		Expected: 1,
@@ -68,7 +68,7 @@ func TestIdVSWitness(t *testing.T) {
 	assert.NoError(err)
 
 	eles[0].Limbs[1] = frontend.Variable(100)
-	assignment2 := &IDTestCircuit{
+	assignment2 := &idTestCircuit{
 		Eles:     eles,
 		Id:       id,
 		Expected: 0,
