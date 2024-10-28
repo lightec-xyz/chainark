@@ -16,7 +16,6 @@ type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 	BeginID         LinkageID         `gnark:",public"`
 	EndID           LinkageID         `gnark:",public"`
 	NbIDs           frontend.Variable `gnark:",public"`
-	NbBitsPerFpVar  int
 	AcceptableVkFps []FingerPrintBytes
 }
 
@@ -32,7 +31,7 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		return err
 	}
 
-	AssertFpInSet(api, fpVar, c.AcceptableVkFps, int(c.NbBitsPerFpVar))
+	AssertFpInSet(api, fpVar, c.AcceptableVkFps, c.AcceptableFp.BitsPerVar)
 
 	nbIDVals := len(c.BeginID.Vals)
 	AssertIDWitness(api, c.BeginID, c.UnitWit.Public[:nbIDVals], uint(c.BeginID.BitsPerVar))
@@ -55,7 +54,6 @@ func NewGenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El al
 		AcceptableFp:    PlaceholderFingerPrint(nbFpVals, nbBitsPerFpVal),
 		BeginID:         PlaceholderLinkageID(nbIDVals, nbBitsPerIDVal),
 		EndID:           PlaceholderLinkageID(nbIDVals, nbBitsPerIDVal),
-		NbBitsPerFpVar:  nbBitsPerFpVal,
 		AcceptableVkFps: acceptableVkFps,
 	}
 }
