@@ -15,7 +15,7 @@ type UnitProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2
 	NbBitsPerFpVar int
 }
 
-func (prf *UnitProof[FR, G1El, G2El, GtEl]) Assert(
+func (_proof *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	api frontend.API,
 	verifier *plonk.Verifier[FR, G1El, G2El, GtEl],
 	vk plonk.VerifyingKey[FR, G1El, G2El],
@@ -28,16 +28,16 @@ func (prf *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	if err != nil {
 		return err
 	}
-	AssertFpInSet(api, fpVar, prf.UnitVkFpBytes, prf.NbBitsPerFpVar)
+	AssertFpInSet(api, fpVar, _proof.UnitVkFpBytes, _proof.NbBitsPerFpVar)
 
 	//2. constraint witness against BeginID & EndID
-	nbIDVals := len(prf.BeginID.Vals)
-	AssertIDWitness(api, prf.BeginID, witness.Public[:nbIDVals], uint(prf.BeginID.BitsPerVar))
-	AssertIDWitness(api, prf.EndID, witness.Public[nbIDVals:nbIDVals*2], uint(prf.EndID.BitsPerVar))
+	nbIDVals := len(_proof.BeginID.Vals)
+	AssertIDWitness(api, _proof.BeginID, witness.Public[:nbIDVals], uint(_proof.BeginID.BitsPerVar))
+	AssertIDWitness(api, _proof.EndID, witness.Public[nbIDVals:nbIDVals*2], uint(_proof.EndID.BitsPerVar))
 
 	//3. constraint witness against NbIDs
 	nbIDs := RetrieveU32ValueFromElement[FR](api, witness.Public[nbIDVals*2])
-	api.AssertIsEqual(prf.NbIDs, nbIDs)
+	api.AssertIsEqual(_proof.NbIDs, nbIDs)
 
 	//4. assert proof
 	return verifier.AssertProof(vk, proof, witness, plonk.WithCompleteArithmetic())
