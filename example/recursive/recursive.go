@@ -112,7 +112,7 @@ func setup() {
 func prove(args []string) {
 	l := common.NbIDVals * common.NbBitsPerIDVal * 2 / 8
 	if len(args) != 11 {
-		panic("expected 6 parameters")
+		panic("expected 11 parameters")
 	}
 
 	//load first vk

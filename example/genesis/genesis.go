@@ -96,7 +96,7 @@ func setup() {
 
 func prove(args []string) {
 	if len(args) != 4 {
-		panic("expected 6 parameters")
+		panic("expected 4 parameters")
 	}
 
 	beginIndex, err := strconv.ParseInt(args[2], 10, 32)
