@@ -1,6 +1,5 @@
 # chainark
-a ZKP library to prove a chain of any given relationship, such as block chain, signature chain, etc, which is based on gnark plonk.
-
+a ZKP library to prove a chain of any given relationship, such as block chain, signature chain, etc.
 
 3 kinds circuits are defined:
 - unit circuit: several unit circuits can be predefined to handle different distance from begin to end point. for example, in below picture, 3 unit circuit A/B/C are defined to handle different distance x, y-x, and z-y.
