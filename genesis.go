@@ -11,7 +11,7 @@ import (
 type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
 	UnitVk          plonk.VerifyingKey[FR, G1El, G2El]
 	UnitProof       plonk.Proof[FR, G1El, G2El]
-	UnitWit         plonk.Witness[FR]
+	UnitWitness     plonk.Witness[FR]
 	AcceptableFp    FingerPrint       `gnark:",public"` // only there to keep the shape of genesis public witness in alignment with that of recursive
 	BeginID         LinkageID         `gnark:",public"`
 	EndID           LinkageID         `gnark:",public"`
@@ -34,12 +34,12 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	AssertFpInSet(api, fpVar, c.AcceptableVkFps, c.AcceptableFp.BitsPerVar)
 
 	nbIDVals := len(c.BeginID.Vals)
-	AssertIDWitness(api, c.BeginID, c.UnitWit.Public[:nbIDVals], uint(c.BeginID.BitsPerVar))
-	AssertIDWitness(api, c.EndID, c.UnitWit.Public[nbIDVals:nbIDVals*2], uint(c.EndID.BitsPerVar))
-	nbIDs := RetrieveU32ValueFromElement[FR](api, c.UnitWit.Public[nbIDVals*2])
+	AssertIDWitness(api, c.BeginID, c.UnitWitness.Public[:nbIDVals], uint(c.BeginID.BitsPerVar))
+	AssertIDWitness(api, c.EndID, c.UnitWitness.Public[nbIDVals:nbIDVals*2], uint(c.EndID.BitsPerVar))
+	nbIDs := RetrieveU32ValueFromElement[FR](api, c.UnitWitness.Public[nbIDVals*2])
 	api.AssertIsEqual(c.NbIDs, nbIDs)
 
-	return verifier.AssertProof(c.UnitVk, c.UnitProof, c.UnitWit, plonk.WithCompleteArithmetic())
+	return verifier.AssertProof(c.UnitVk, c.UnitProof, c.UnitWitness, plonk.WithCompleteArithmetic())
 }
 
 func NewGenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
@@ -50,7 +50,7 @@ func NewGenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El al
 	return &GenesisCircuit[FR, G1El, G2El, GtEl]{
 		UnitVk:          plonk.PlaceholderVerifyingKey[FR, G1El, G2El](unitCcs),
 		UnitProof:       plonk.PlaceholderProof[FR, G1El, G2El](unitCcs),
-		UnitWit:         plonk.PlaceholderWitness[FR](unitCcs),
+		UnitWitness:     plonk.PlaceholderWitness[FR](unitCcs),
 		AcceptableFp:    PlaceholderFingerPrint(nbFpVals, nbBitsPerFpVal),
 		BeginID:         PlaceholderLinkageID(nbIDVals, nbBitsPerIDVal),
 		EndID:           PlaceholderLinkageID(nbIDVals, nbBitsPerIDVal),
@@ -61,7 +61,7 @@ func NewGenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El al
 func NewGenesisAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	vk plonk.VerifyingKey[FR, G1El, G2El],
 	proof plonk.Proof[FR, G1El, G2El],
-	wit plonk.Witness[FR],
+	witness plonk.Witness[FR],
 	recursiveFp FingerPrint,
 	beginID, endID LinkageID,
 	nbIDs int,
@@ -70,7 +70,7 @@ func NewGenesisAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El
 	return &GenesisCircuit[FR, G1El, G2El, GtEl]{
 		UnitVk:       vk,
 		UnitProof:    proof,
-		UnitWit:      wit,
+		UnitWitness:  witness,
 		AcceptableFp: recursiveFp,
 		BeginID:      beginID,
 		EndID:        endID,

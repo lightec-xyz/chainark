@@ -20,7 +20,7 @@ func (prf *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 	verifier *plonk.Verifier[FR, G1El, G2El, GtEl],
 	vk plonk.VerifyingKey[FR, G1El, G2El],
 	proof plonk.Proof[FR, G1El, G2El],
-	wit plonk.Witness[FR],
+	witness plonk.Witness[FR],
 ) error {
 
 	//1. ensure that we are using the correct verification key
@@ -32,13 +32,13 @@ func (prf *UnitProof[FR, G1El, G2El, GtEl]) Assert(
 
 	//2. constraint witness against BeginID & EndID
 	nbIDVals := len(prf.BeginID.Vals)
-	AssertIDWitness(api, prf.BeginID, wit.Public[:nbIDVals], uint(prf.BeginID.BitsPerVar))
-	AssertIDWitness(api, prf.EndID, wit.Public[nbIDVals:nbIDVals*2], uint(prf.EndID.BitsPerVar))
+	AssertIDWitness(api, prf.BeginID, witness.Public[:nbIDVals], uint(prf.BeginID.BitsPerVar))
+	AssertIDWitness(api, prf.EndID, witness.Public[nbIDVals:nbIDVals*2], uint(prf.EndID.BitsPerVar))
 
 	//3. constraint witness against NbIDs
-	nbIDs := RetrieveU32ValueFromElement[FR](api, wit.Public[nbIDVals*2])
+	nbIDs := RetrieveU32ValueFromElement[FR](api, witness.Public[nbIDVals*2])
 	api.AssertIsEqual(prf.NbIDs, nbIDs)
 
 	//4. assert proof
-	return verifier.AssertProof(vk, proof, wit, plonk.WithCompleteArithmetic())
+	return verifier.AssertProof(vk, proof, witness, plonk.WithCompleteArithmetic())
 }

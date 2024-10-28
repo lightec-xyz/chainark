@@ -178,10 +178,7 @@ func WriteProof(proof plonk.Proof, fn string) error {
 
 func ReadWitness(fn string) (witness.Witness, error) {
 	field := ecc.BN254.ScalarField()
-	var (
-		wit witness.Witness
-	)
-	wit, err := witness.New(field)
+	_witness, err := witness.New(field)
 	if err != nil {
 		return nil, err
 	}
@@ -191,16 +188,16 @@ func ReadWitness(fn string) (witness.Witness, error) {
 		return nil, err
 	}
 	defer f.Close()
-	_, err = wit.ReadFrom(f)
+	_, err = _witness.ReadFrom(f)
 	if err != nil {
 		return nil, err
 	}
 
-	return wit, nil
+	return _witness, nil
 }
 
-func WriteWitness(wit witness.Witness, fn string) error {
-	pub, err := wit.Public()
+func WriteWitness(_witness witness.Witness, fn string) error {
+	pubWitness, err := _witness.Public()
 	if err != nil {
 		return err
 	}
@@ -219,7 +216,7 @@ func WriteWitness(wit witness.Witness, fn string) error {
 		return err
 	}
 	defer f.Close()
-	_, err = pub.WriteTo(f)
+	_, err = pubWitness.WriteTo(f)
 	if err != nil {
 		return err
 	}

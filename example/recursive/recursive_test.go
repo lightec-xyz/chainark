@@ -69,10 +69,10 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 	firstProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_firstProof)
 	assert.NoError(err)
 
-	_firstWit, err := utils.ReadWitness(filepath.Join(dataDir, "genesis_0_8.wit"))
+	_firstWitness, err := utils.ReadWitness(filepath.Join(dataDir, "genesis_0_8.wtns"))
 	assert.NoError(err)
 
-	firstWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_firstWit)
+	firstWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_firstWitness)
 	assert.NoError(err)
 
 	_secondProof, err := utils.ReadProof(filepath.Join(dataDir, "unit_8_12.proof"))
@@ -81,10 +81,10 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 	secondProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_secondProof)
 	assert.NoError(err)
 
-	_secondWit, err := utils.ReadWitness(filepath.Join(dataDir, "unit_8_12.wit"))
+	_secondWitness, err := utils.ReadWitness(filepath.Join(dataDir, "unit_8_12.wtns"))
 	assert.NoError(err)
 
-	secondWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_secondWit)
+	secondWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_secondWitness)
 	assert.NoError(err)
 
 	beginID, err := hex.DecodeString("843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85")
@@ -99,7 +99,7 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 	assignment := chainark.NewRecursiveAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		firstVk, secondVk,
 		firstProof, secondProof,
-		firstWit, secondWit,
+		firstWitness, secondWitness,
 		recursiveVkFp,
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(relayID, common.NbBitsPerIDVal),
@@ -167,10 +167,10 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 	firstProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_firstProof)
 	assert.NoError(err)
 
-	_firstWit, err := utils.ReadWitness(filepath.Join(dataDir, "recursive_0_12.wit"))
+	_firstWitness, err := utils.ReadWitness(filepath.Join(dataDir, "recursive_0_12.wtns"))
 	assert.NoError(err)
 
-	firstWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_firstWit)
+	firstWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_firstWitness)
 	assert.NoError(err)
 
 	_secondProof, err := utils.ReadProof(filepath.Join(dataDir, "unit_12_14.proof"))
@@ -179,10 +179,10 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 	secondProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_secondProof)
 	assert.NoError(err)
 
-	_secondWit, err := utils.ReadWitness(filepath.Join(dataDir, "unit_12_14.wit"))
+	_secondWitness, err := utils.ReadWitness(filepath.Join(dataDir, "unit_12_14.wtns"))
 	assert.NoError(err)
 
-	secondWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_secondWit)
+	secondWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_secondWitness)
 	assert.NoError(err)
 
 	beginID, err := hex.DecodeString("843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85")
@@ -197,7 +197,7 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 	assignment := chainark.NewRecursiveAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		firstVk, secondVk,
 		firstProof, secondProof,
-		firstWit, secondWit,
+		firstWitness, secondWitness,
 		recursiveVkFp,
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(relayID, common.NbBitsPerIDVal),

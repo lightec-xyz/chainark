@@ -9,21 +9,21 @@ import (
 )
 
 func AssertIDWitness[FR emulated.FieldParams](
-	api frontend.API, id LinkageID, els []emulated.Element[FR], nbMaxBitsPerVar ...uint,
+	api frontend.API, id LinkageID, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) {
-	AssertValsWithWitnessElements[FR](api, id.Vals, els, nbMaxBitsPerVar...)
+	AssertValsWithWitnessElements[FR](api, id.Vals, witnessValues, nbMaxBitsPerVar...)
 }
 
 func AssertFpWitness[FR emulated.FieldParams](
-	api frontend.API, fp FingerPrint, els []emulated.Element[FR], nbMaxBitsPerVar ...uint,
+	api frontend.API, fp FingerPrint, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) {
-	AssertValsWithWitnessElements[FR](api, fp.Vals, els, nbMaxBitsPerVar...)
+	AssertValsWithWitnessElements[FR](api, fp.Vals, witnessValues, nbMaxBitsPerVar...)
 }
 
 func AssertValsWithWitnessElements[FR emulated.FieldParams](
-	api frontend.API, vars []frontend.Variable, els []emulated.Element[FR], nbMaxBitsPerVar ...uint,
+	api frontend.API, vars []frontend.Variable, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) {
-	api.AssertIsEqual(len(els), len(vars))
+	api.AssertIsEqual(len(witnessValues), len(vars))
 
 	var fr FR
 	var maxBits int
@@ -37,9 +37,9 @@ func AssertValsWithWitnessElements[FR emulated.FieldParams](
 
 	nbEffectiveLimbs := int((maxBits + bitsPerLimb - 1) / bitsPerLimb)
 
-	for i := 0; i < len(els); i++ {
+	for i := 0; i < len(witnessValues); i++ {
 		for j := nbEffectiveLimbs; j < int(fr.NbLimbs()); j++ {
-			api.AssertIsEqual(els[i].Limbs[j], 0)
+			api.AssertIsEqual(witnessValues[i].Limbs[j], 0)
 		}
 	}
 
@@ -49,7 +49,7 @@ func AssertValsWithWitnessElements[FR emulated.FieldParams](
 	}
 
 	for i := 0; i < len(vars); i++ {
-		eleLimbs := els[i].Limbs
+		eleLimbs := witnessValues[i].Limbs
 		composed := eleLimbs[nbEffectiveLimbs-1]
 		for j := nbEffectiveLimbs - 2; j >= 0; j-- {
 			v := api.Mul(composed, constFactor)
@@ -61,15 +61,15 @@ func AssertValsWithWitnessElements[FR emulated.FieldParams](
 }
 
 func IsIDEqualToWitness[FR emulated.FieldParams](
-	api frontend.API, id LinkageID, els []emulated.Element[FR], nbMaxBitsPerVar ...uint,
+	api frontend.API, id LinkageID, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) frontend.Variable {
-	return TestValsWithWitnessElements[FR](api, id.Vals, els, nbMaxBitsPerVar...)
+	return TestValsWithWitnessElements[FR](api, id.Vals, witnessValues, nbMaxBitsPerVar...)
 }
 
 func TestValsWithWitnessElements[FR emulated.FieldParams](
-	api frontend.API, vars []frontend.Variable, els []emulated.Element[FR], nbMaxBitsPerVar ...uint,
+	api frontend.API, vars []frontend.Variable, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) frontend.Variable {
-	api.AssertIsEqual(len(els), len(vars))
+	api.AssertIsEqual(len(witnessValues), len(vars))
 
 	var fr FR
 	var maxBits int
@@ -83,9 +83,9 @@ func TestValsWithWitnessElements[FR emulated.FieldParams](
 
 	nbEffectiveLimbs := int((maxBits + bitsPerLimb - 1) / bitsPerLimb)
 
-	for i := 0; i < len(els); i++ {
+	for i := 0; i < len(witnessValues); i++ {
 		for j := nbEffectiveLimbs; j < int(fr.NbLimbs()); j++ {
-			api.AssertIsEqual(els[i].Limbs[j], 0)
+			api.AssertIsEqual(witnessValues[i].Limbs[j], 0)
 		}
 	}
 
@@ -96,7 +96,7 @@ func TestValsWithWitnessElements[FR emulated.FieldParams](
 
 	sum := frontend.Variable(1)
 	for i := 0; i < len(vars); i++ {
-		eleLimbs := els[i].Limbs
+		eleLimbs := witnessValues[i].Limbs
 		composed := eleLimbs[nbEffectiveLimbs-1]
 		for j := nbEffectiveLimbs - 2; j >= 0; j-- {
 			v := api.Mul(composed, constFactor)

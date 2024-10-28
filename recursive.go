@@ -20,8 +20,8 @@ type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alg
 	NbIDsInFirstWit   frontend.Variable
 	NbIDsInSecondWit  frontend.Variable
 	NbIDs             frontend.Variable `gnark:",public"`
-	FirstWit          plonk.Witness[FR]
-	SecondWit         plonk.Witness[FR]
+	FirstWitness      plonk.Witness[FR]
+	SecondWitness     plonk.Witness[FR]
 	// some constant values passed from outside
 	GenesisVkFpBytes FingerPrintBytes
 	UnitVkFpBytes    []FingerPrintBytes
@@ -39,7 +39,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		EndID:   c.RelayID,
 		NbIDs:   c.NbIDsInFirstWit,
 	}
-	err = gOrR.Assert(api, verifier, c.FirstVk, c.FirstWit, c.AcceptableFirstFp, c.GenesisVkFpBytes, c.FirstProof)
+	err = gOrR.Assert(api, verifier, c.FirstVk, c.FirstWitness, c.AcceptableFirstFp, c.GenesisVkFpBytes, c.FirstProof)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		UnitVkFpBytes:  c.UnitVkFpBytes,
 		NbBitsPerFpVar: c.AcceptableFirstFp.BitsPerVar,
 	}
-	err = unit.Assert(api, verifier, c.SecondVk, c.SecondProof, c.SecondWit)
+	err = unit.Assert(api, verifier, c.SecondVk, c.SecondProof, c.SecondWitness)
 	if err != nil {
 		return err
 	}
@@ -79,8 +79,8 @@ func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El 
 		BeginID:           PlaceholderLinkageID(nbIDVals, nbBitsPerIdVal),
 		RelayID:           PlaceholderLinkageID(nbIDVals, nbBitsPerIdVal),
 		EndID:             PlaceholderLinkageID(nbIDVals, nbBitsPerIdVal),
-		FirstWit:          plonk.PlaceholderWitness[FR](genesisCcs),
-		SecondWit:         plonk.PlaceholderWitness[FR](unitCcs),
+		FirstWitness:      plonk.PlaceholderWitness[FR](genesisCcs),
+		SecondWitness:     plonk.PlaceholderWitness[FR](unitCcs),
 
 		UnitVkFpBytes:    unitVkFpBytes,
 		GenesisVkFpBytes: genesisVkFpBytes,
@@ -90,7 +90,7 @@ func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El 
 func NewRecursiveAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	firstVk, secondVk plonk.VerifyingKey[FR, G1El, G2El],
 	firstProof, secondProof plonk.Proof[FR, G1El, G2El],
-	firstWit, secondWit plonk.Witness[FR],
+	firstWitness, secondWitness plonk.Witness[FR],
 	recursiveFp FingerPrint,
 	beginID, relayID, endID LinkageID,
 	nbIDsInFirstWit, nbIDsInSecondWit, nbIDs frontend.Variable,
@@ -104,8 +104,8 @@ func NewRecursiveAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2
 		BeginID:           beginID,
 		RelayID:           relayID,
 		EndID:             endID,
-		FirstWit:          firstWit,
-		SecondWit:         secondWit,
+		FirstWitness:      firstWitness,
+		SecondWitness:     secondWitness,
 		NbIDsInFirstWit:   nbIDsInFirstWit,
 		NbIDsInSecondWit:  nbIDsInSecondWit,
 		NbIDs:             nbIDs,
@@ -122,7 +122,7 @@ func (prf *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	api frontend.API,
 	verifier *plonk.Verifier[FR, G1El, G2El, GtEl],
 	vk plonk.VerifyingKey[FR, G1El, G2El],
-	wit plonk.Witness[FR],
+	witness plonk.Witness[FR],
 	recursiveVkFp FingerPrint,
 	genesisVkFpBytes FingerPrintBytes,
 	proof plonk.Proof[FR, G1El, G2El]) error {
@@ -149,16 +149,16 @@ func (prf *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 
 	// 2. ensure that we have been using the same recursiveVkFp value, that is, constraint witness against acceptableFp
 	nbFpVars := len(recursiveVkFp.Vals)
-	AssertFpWitness(api, recursiveVkFp, wit.Public[:nbFpVars], uint(recursiveVkFp.BitsPerVar))
+	AssertFpWitness(api, recursiveVkFp, witness.Public[:nbFpVars], uint(recursiveVkFp.BitsPerVar))
 
 	// 3. constraint witness against BeginID & EndID
 	nbIDVals := len(prf.BeginID.Vals)
-	AssertIDWitness[FR](api, prf.BeginID, wit.Public[nbFpVars:nbFpVars+nbIDVals], uint(prf.BeginID.BitsPerVar))
-	AssertIDWitness[FR](api, prf.EndID, wit.Public[nbFpVars+nbIDVals:nbFpVars+nbIDVals*2], uint(prf.EndID.BitsPerVar))
+	AssertIDWitness[FR](api, prf.BeginID, witness.Public[nbFpVars:nbFpVars+nbIDVals], uint(prf.BeginID.BitsPerVar))
+	AssertIDWitness[FR](api, prf.EndID, witness.Public[nbFpVars+nbIDVals:nbFpVars+nbIDVals*2], uint(prf.EndID.BitsPerVar))
 
 	// 4. constraint witness against NbIDs
-	nbIDs := RetrieveU32ValueFromElement[FR](api, wit.Public[nbFpVars+nbIDVals*2])
+	nbIDs := RetrieveU32ValueFromElement[FR](api, witness.Public[nbFpVars+nbIDVals*2])
 	api.AssertIsEqual(prf.NbIDs, nbIDs)
 
-	return verifier.AssertProof(vk, proof, wit, plonk.WithCompleteArithmetic())
+	return verifier.AssertProof(vk, proof, witness, plonk.WithCompleteArithmetic())
 }

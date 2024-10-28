@@ -17,7 +17,7 @@ import (
 	"github.com/lightec-xyz/chainark/example/utils"
 )
 
-// TestGenesis_Simulated only can be runned after unit ccs/pk/vk/proof/wit files are generated
+// TestGenesis_Simulated only can be runned after unit ccs/pk/vk/proof/witness files are generated
 func TestGenesis_Simulated(t *testing.T) {
 	assert := test.NewAssert(t)
 
@@ -47,7 +47,7 @@ func TestGenesis_Simulated(t *testing.T) {
 
 	innerProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_innerProof)
 	assert.NoError(err)
-	_innerWit, err := utils.ReadWitness(filepath.Join(dataDir, "unit_0_8.wit"))
+	_innerWit, err := utils.ReadWitness(filepath.Join(dataDir, "unit_0_8.wtns"))
 	assert.NoError(err)
 
 	innerWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_innerWit)
@@ -112,7 +112,7 @@ func TestGenesis_Plonk_BN254(t *testing.T) {
 
 	innerProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_innerProof)
 	assert.NoError(err)
-	_innerWit, err := utils.ReadWitness(filepath.Join(dataDir, "unit_0_8.wit"))
+	_innerWit, err := utils.ReadWitness(filepath.Join(dataDir, "unit_0_8.wtns"))
 	assert.NoError(err)
 
 	innerWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_innerWit)
@@ -151,16 +151,16 @@ func TestGenesis_Plonk_BN254(t *testing.T) {
 	pk, vk, err := plonk.Setup(ccs, srs, srsLagrange)
 	assert.NoError(err)
 
-	wit, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
+	witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
 	assert.NoError(err)
 
-	pubWit, err := wit.Public()
+	pubWitness, err := witness.Public()
 	assert.NoError(err)
 
-	proof, err := plonk.Prove(ccs, pk, wit)
+	proof, err := plonk.Prove(ccs, pk, witness)
 	assert.NoError(err)
 
-	err = plonk.Verify(proof, vk, pubWit)
+	err = plonk.Verify(proof, vk, pubWitness)
 	assert.NoError(err)
 
 }

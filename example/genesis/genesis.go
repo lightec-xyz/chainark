@@ -121,7 +121,7 @@ func prove(args []string) {
 	}
 
 	//load public witness
-	_innerWit, err := utils.ReadWitness(filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.wit", beginIndex, endIndex)))
+	_innerWit, err := utils.ReadWitness(filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.wtns", beginIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
@@ -181,11 +181,11 @@ func prove(args []string) {
 		nbIDs,
 	)
 
-	wit, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
+	witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
 	if err != nil {
 		panic(err)
 	}
-	pubWit, err := wit.Public()
+	pubWitness, err := witness.Public()
 	if err != nil {
 		panic(err)
 	}
@@ -208,14 +208,14 @@ func prove(args []string) {
 	}
 
 	fmt.Println("proving ...")
-	proof, err := plonk.Prove(ccs, pk, wit,
+	proof, err := plonk.Prove(ccs, pk, witness,
 		recursive_plonk.GetNativeProverOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Println("verifying ...")
-	err = plonk.Verify(proof, vk, pubWit,
+	err = plonk.Verify(proof, vk, pubWitness,
 		recursive_plonk.GetNativeVerifierOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
 	if err != nil {
 		panic(err)
@@ -227,7 +227,7 @@ func prove(args []string) {
 		panic(err)
 	}
 
-	err = utils.WriteWitness(pubWit, filepath.Join(dataDir, fmt.Sprintf("genesis_%v_%v.wit", beginIndex, endIndex)))
+	err = utils.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("genesis_%v_%v.wtns", beginIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}

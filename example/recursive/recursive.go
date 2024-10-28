@@ -26,7 +26,7 @@ var dataDir = "../testdata"
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("usage: ./recursive setup")
-		fmt.Println("usage: ./recursive prove firstProof firstWit secondProof secondWit beginID relayID endID beginIndex endIndex")
+		fmt.Println("usage: ./recursive prove firstProof firstWitness secondProof secondWitness beginID relayID endID beginIndex endIndex")
 		return
 	}
 
@@ -137,12 +137,12 @@ func prove(args []string) {
 		panic(err)
 	}
 
-	_firstWit, err := utils.ReadWitness(filepath.Join(dataDir, args[2]))
+	_firstWitness, err := utils.ReadWitness(filepath.Join(dataDir, args[2]))
 	if err != nil {
 		panic(err)
 	}
 
-	firstWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_firstWit)
+	firstWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_firstWitness)
 	if err != nil {
 		panic(err)
 	}
@@ -158,11 +158,11 @@ func prove(args []string) {
 		panic(err)
 	}
 
-	_secondWit, err := utils.ReadWitness(filepath.Join(dataDir, args[4]))
+	_secondWitness, err := utils.ReadWitness(filepath.Join(dataDir, args[4]))
 	if err != nil {
 		panic(err)
 	}
-	secondWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_secondWit)
+	secondWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_secondWitness)
 	if err != nil {
 		panic(err)
 	}
@@ -232,7 +232,7 @@ func prove(args []string) {
 	assignment := chainark.NewRecursiveAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		firstVk, unitVk,
 		firstProof, secondProof,
-		firstWit, secondWit,
+		firstWitness, secondWitness,
 		recursiveFp,
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(relayID, common.NbBitsPerIDVal),
@@ -240,11 +240,11 @@ func prove(args []string) {
 		nbIDsInFirstWit, nbIDsInSecondWit, nbIDs,
 	)
 
-	wit, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
+	witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
 	if err != nil {
 		panic(err)
 	}
-	pubWit, err := wit.Public()
+	pubWitness, err := witness.Public()
 	if err != nil {
 		panic(err)
 	}
@@ -266,14 +266,14 @@ func prove(args []string) {
 	}
 
 	fmt.Println("proving ...")
-	proof, err := plonk.Prove(ccs, pk, wit,
+	proof, err := plonk.Prove(ccs, pk, witness,
 		recursive_plonk.GetNativeProverOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Println("verifying ...")
-	err = plonk.Verify(proof, vk, pubWit,
+	err = plonk.Verify(proof, vk, pubWitness,
 		recursive_plonk.GetNativeVerifierOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
 	if err != nil {
 		panic(err)
@@ -285,7 +285,7 @@ func prove(args []string) {
 		panic(err)
 	}
 
-	err = utils.WriteWitness(pubWit, filepath.Join(dataDir, fmt.Sprintf("recursive_%v_%v.wit", beignIndex, endIndex)))
+	err = utils.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("recursive_%v_%v.wtns", beignIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}

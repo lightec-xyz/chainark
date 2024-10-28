@@ -51,16 +51,16 @@ func TestUnitCircuit_8_Plonk_BN254(t *testing.T) {
 	pk, vk, err := plonk.Setup(ccs, srs, srsLagrange)
 	assert.NoError(err)
 
-	wit, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField(), frontend.PublicOnly())
+	witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
 	assert.NoError(err)
 
-	pubWit, err := wit.Public()
+	pubWitness, err := witness.Public()
 	assert.NoError(err)
 
-	proof, err := plonk.Prove(ccs, pk, wit)
+	proof, err := plonk.Prove(ccs, pk, witness)
 	assert.NoError(err)
 
-	err = plonk.Verify(proof, vk, pubWit)
+	err = plonk.Verify(proof, vk, pubWitness)
 	assert.NoError(err)
 }
 
