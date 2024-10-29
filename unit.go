@@ -18,7 +18,7 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) AssertRelations(
 	vkey plonk.VerifyingKey[FR, G1El, G2El],
 	proof plonk.Proof[FR, G1El, G2El],
 	witness plonk.Witness[FR],
-	accpetableFps []FingerPrintBytes, bitsPerFpVar int,
+	validFps []FingerPrintBytes, bitsPerFpVar int,
 ) error {
 
 	// ensure that we are using the correct verification key
@@ -26,12 +26,12 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) AssertRelations(
 	if err != nil {
 		return err
 	}
-	AssertFpInSet(api, fp, accpetableFps, bitsPerFpVar)
+	AssertFpInSet(api, fp, validFps, bitsPerFpVar)
 
 	// constraint witness against BeginID & EndID
-	nbIDVals := len(up.BeginID.Vals)
-	AssertIDWitness(api, up.BeginID, witness.Public[:nbIDVals], uint(up.BeginID.BitsPerVar))
-	AssertIDWitness(api, up.EndID, witness.Public[nbIDVals:nbIDVals*2], uint(up.EndID.BitsPerVar))
+	nbVals := len(up.BeginID.Vals)
+	AssertIDWitness(api, up.BeginID, witness.Public[:nbVals], uint(up.BeginID.BitsPerVar))
+	AssertIDWitness(api, up.EndID, witness.Public[nbVals:nbVals*2], uint(up.EndID.BitsPerVar))
 
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }

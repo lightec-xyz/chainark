@@ -13,13 +13,13 @@ type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 	UnitProof   plonk.Proof[FR, G1El, G2El]
 	UnitWitness plonk.Witness[FR]
 
-	AcceptableFp FingerPrint `gnark:",public"` // only there to keep the shape of genesis public witness in alignment with that of recursive
+	AcceptableFirstFp FingerPrint `gnark:",public"` // only there to keep the shape of genesis public witness in alignment with that of recursive
 
 	GenesisID LinkageID `gnark:",public"`
 	SecondID  LinkageID `gnark:",public"`
 
 	// some constant values passed from outside
-	UnitFpBytes []FingerPrintBytes
+	ValidUnitFps []FingerPrintBytes
 }
 
 // Note that AcceptableFirstFp is only there for shaping purpose, therefore no verification needed here
@@ -33,24 +33,24 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		BeginID: c.GenesisID,
 		EndID:   c.SecondID,
 	}
-	return unit.AssertRelations(api, verifier, c.UnitVKey, c.UnitProof, c.UnitWitness, c.UnitFpBytes, c.AcceptableFp.BitsPerVar)
+	return unit.AssertRelations(api, verifier, c.UnitVKey, c.UnitProof, c.UnitWitness, c.ValidUnitFps, c.AcceptableFirstFp.BitsPerVar)
 }
 
 func NewGenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
-	nbIDVals, nbBitsPerIDVal, nbFpVals, nbBitsPerFpVal int,
+	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
 	ccsUnit constraint.ConstraintSystem,
-	unitFpBytes []FingerPrintBytes) frontend.Circuit {
+	validFps []FingerPrintBytes) frontend.Circuit {
 
 	return &GenesisCircuit[FR, G1El, G2El, GtEl]{
-		UnitVKey:     plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
-		UnitProof:    plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
-		UnitWitness:  plonk.PlaceholderWitness[FR](ccsUnit),
-		AcceptableFp: PlaceholderFingerPrint(nbFpVals, nbBitsPerFpVal),
+		UnitVKey:          plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
+		UnitProof:         plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
+		UnitWitness:       plonk.PlaceholderWitness[FR](ccsUnit),
+		AcceptableFirstFp: PlaceholderFingerPrint(nbFpVals, bitsPerFpVal),
 
-		GenesisID: PlaceholderLinkageID(nbIDVals, nbBitsPerIDVal),
-		SecondID:  PlaceholderLinkageID(nbIDVals, nbBitsPerIDVal),
+		GenesisID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
+		SecondID:  PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 
-		UnitFpBytes: unitFpBytes,
+		ValidUnitFps: validFps,
 	}
 }
 
@@ -63,10 +63,10 @@ func NewGenesisAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El
 ) frontend.Circuit {
 
 	return &GenesisCircuit[FR, G1El, G2El, GtEl]{
-		UnitVKey:     vkey,
-		UnitProof:    proof,
-		UnitWitness:  witness,
-		AcceptableFp: recursiveFp,
+		UnitVKey:          vkey,
+		UnitProof:         proof,
+		UnitWitness:       witness,
+		AcceptableFirstFp: recursiveFp,
 
 		GenesisID: genesisID,
 		SecondID:  secondID,

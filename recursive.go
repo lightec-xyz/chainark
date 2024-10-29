@@ -24,8 +24,8 @@ type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alg
 	SecondWitness plonk.Witness[FR]
 
 	// some constant values passed from outside
-	GenesisFpBytes FingerPrintBytes
-	UnitFpBytes    []FingerPrintBytes
+	ValidGenesisFp FingerPrintBytes
+	ValidUnitFps   []FingerPrintBytes
 }
 
 func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
@@ -39,7 +39,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		BeginID: c.BeginID,
 		EndID:   c.RelayID,
 	}
-	err = gOrR.Assert(api, verifier, c.FirstVKey, c.FirstWitness, c.AcceptableFirstFp, c.GenesisFpBytes, c.FirstProof)
+	err = gOrR.Assert(api, verifier, c.FirstVKey, c.FirstWitness, c.AcceptableFirstFp, c.ValidGenesisFp, c.FirstProof)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		BeginID: c.RelayID,
 		EndID:   c.EndID,
 	}
-	return unit.AssertRelations(api, c.SecondVKey, c.SecondProof, c.SecondWitness, c.UnitFpBytes, c.AcceptableFirstFp.BitsPerVar)
+	return unit.AssertRelations(api, c.SecondVKey, c.SecondProof, c.SecondWitness, c.ValidUnitFps, c.AcceptableFirstFp.BitsPerVar)
 }
 
 func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
@@ -73,8 +73,8 @@ func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El 
 		FirstWitness:  plonk.PlaceholderWitness[FR](ccsGenesis),
 		SecondWitness: plonk.PlaceholderWitness[FR](ccsUnit),
 
-		UnitFpBytes:    unitFpBytes,
-		GenesisFpBytes: genesisFpBytes,
+		ValidUnitFps:   unitFpBytes,
+		ValidGenesisFp: genesisFpBytes,
 	}
 }
 
