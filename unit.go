@@ -14,25 +14,24 @@ type UnitProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2
 
 func (up *UnitProof[FR, G1El, G2El, GtEl]) AssertRelations(
 	api frontend.API,
+	verifier *plonk.Verifier[FR, G1El, G2El, GtEl],
 	vkey plonk.VerifyingKey[FR, G1El, G2El],
+	proof plonk.Proof[FR, G1El, G2El],
 	witness plonk.Witness[FR],
-	fpFixed FingerPrint) error {
+	validFps []FingerPrintBytes, bitsPerFpVar int,
+) error {
 
 	// ensure that we are using the correct verification key
 	fp, err := vkey.FingerPrint(api)
 	if err != nil {
 		return err
 	}
-	vkeyFp, err := FpValueOf(api, fp, fpFixed.BitsPerVar)
-	if err != nil {
-		return err
-	}
-	fpFixed.AssertIsEqual(api, vkeyFp)
+	AssertFpInSet(api, fp, validFps, bitsPerFpVar)
 
 	// constraint witness against BeginID & EndID
 	nbVars := len(up.BeginID.Vals)
 	AssertIDWitness(api, up.BeginID, witness.Public[:nbVars], uint(up.BeginID.BitsPerVar))
 	AssertIDWitness(api, up.EndID, witness.Public[nbVars:nbVars*2], uint(up.EndID.BitsPerVar))
 
-	return nil
+	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }
