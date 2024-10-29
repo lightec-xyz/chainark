@@ -9,14 +9,17 @@ import (
 )
 
 type GenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	UnitVk          plonk.VerifyingKey[FR, G1El, G2El]
-	UnitProof       plonk.Proof[FR, G1El, G2El]
-	UnitWitness     plonk.Witness[FR]
-	AcceptableFp    FingerPrint       `gnark:",public"` // only there to keep the shape of genesis public witness in alignment with that of recursive
-	BeginID         LinkageID         `gnark:",public"`
-	EndID           LinkageID         `gnark:",public"`
-	NbIDs           frontend.Variable `gnark:",public"`
-	AcceptableVkFps []FingerPrintBytes
+	UnitVKey    plonk.VerifyingKey[FR, G1El, G2El]
+	UnitProof   plonk.Proof[FR, G1El, G2El]
+	UnitWitness plonk.Witness[FR]
+
+	AcceptableFp FingerPrint `gnark:",public"` // only there to keep the shape of genesis public witness in alignment with that of recursive
+
+	GenesisID LinkageID `gnark:",public"`
+	SecondID  LinkageID `gnark:",public"`
+
+	// some constant values passed from outside
+	UnitFpBytes []FingerPrintBytes
 }
 
 // Note that AcceptableFirstFp is only there for shaping purpose, therefore no verification needed here
@@ -26,54 +29,46 @@ func (c *GenesisCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		return err
 	}
 
-	fpVar, err := c.UnitVk.FingerPrint(api)
-	if err != nil {
-		return err
+	unit := UnitProof[FR, G1El, G2El, GtEl]{
+		BeginID: c.GenesisID,
+		EndID:   c.SecondID,
 	}
-
-	AssertFpInSet(api, fpVar, c.AcceptableVkFps, c.AcceptableFp.BitsPerVar)
-
-	nbIDVals := len(c.BeginID.Vals)
-	AssertIDWitness(api, c.BeginID, c.UnitWitness.Public[:nbIDVals], uint(c.BeginID.BitsPerVar))
-	AssertIDWitness(api, c.EndID, c.UnitWitness.Public[nbIDVals:nbIDVals*2], uint(c.EndID.BitsPerVar))
-	nbIDs := RetrieveU32ValueFromElement[FR](api, c.UnitWitness.Public[nbIDVals*2])
-	api.AssertIsEqual(c.NbIDs, nbIDs)
-
-	return verifier.AssertProof(c.UnitVk, c.UnitProof, c.UnitWitness, plonk.WithCompleteArithmetic())
+	return unit.AssertRelations(api, verifier, c.UnitVKey, c.UnitProof, c.UnitWitness, c.UnitFpBytes, c.AcceptableFp.BitsPerVar)
 }
 
 func NewGenesisCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	nbIDVals, nbBitsPerIDVal, nbFpVals, nbBitsPerFpVal int,
-	unitCcs constraint.ConstraintSystem,
-	acceptableVkFps []FingerPrintBytes) frontend.Circuit {
+	ccsUnit constraint.ConstraintSystem,
+	unitFpBytes []FingerPrintBytes) frontend.Circuit {
 
 	return &GenesisCircuit[FR, G1El, G2El, GtEl]{
-		UnitVk:          plonk.PlaceholderVerifyingKey[FR, G1El, G2El](unitCcs),
-		UnitProof:       plonk.PlaceholderProof[FR, G1El, G2El](unitCcs),
-		UnitWitness:     plonk.PlaceholderWitness[FR](unitCcs),
-		AcceptableFp:    PlaceholderFingerPrint(nbFpVals, nbBitsPerFpVal),
-		BeginID:         PlaceholderLinkageID(nbIDVals, nbBitsPerIDVal),
-		EndID:           PlaceholderLinkageID(nbIDVals, nbBitsPerIDVal),
-		AcceptableVkFps: acceptableVkFps,
+		UnitVKey:     plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
+		UnitProof:    plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
+		UnitWitness:  plonk.PlaceholderWitness[FR](ccsUnit),
+		AcceptableFp: PlaceholderFingerPrint(nbFpVals, nbBitsPerFpVal),
+
+		GenesisID: PlaceholderLinkageID(nbIDVals, nbBitsPerIDVal),
+		SecondID:  PlaceholderLinkageID(nbIDVals, nbBitsPerIDVal),
+
+		UnitFpBytes: unitFpBytes,
 	}
 }
 
 func NewGenesisAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
-	vk plonk.VerifyingKey[FR, G1El, G2El],
+	vkey plonk.VerifyingKey[FR, G1El, G2El],
 	proof plonk.Proof[FR, G1El, G2El],
 	witness plonk.Witness[FR],
 	recursiveFp FingerPrint,
-	beginID, endID LinkageID,
-	nbIDs int,
+	genesisID, secondID LinkageID,
 ) frontend.Circuit {
 
 	return &GenesisCircuit[FR, G1El, G2El, GtEl]{
-		UnitVk:       vk,
+		UnitVKey:     vkey,
 		UnitProof:    proof,
 		UnitWitness:  witness,
 		AcceptableFp: recursiveFp,
-		BeginID:      beginID,
-		EndID:        endID,
-		NbIDs:        nbIDs,
+
+		GenesisID: genesisID,
+		SecondID:  secondID,
 	}
 }

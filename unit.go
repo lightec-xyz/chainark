@@ -8,37 +8,30 @@ import (
 )
 
 type UnitProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	BeginID        LinkageID
-	EndID          LinkageID
-	NbIDs          frontend.Variable
-	UnitVkFpBytes  []FingerPrintBytes
-	NbBitsPerFpVar int
+	BeginID LinkageID
+	EndID   LinkageID
 }
 
-func (_proof *UnitProof[FR, G1El, G2El, GtEl]) Assert(
+func (up *UnitProof[FR, G1El, G2El, GtEl]) AssertRelations(
 	api frontend.API,
 	verifier *plonk.Verifier[FR, G1El, G2El, GtEl],
-	vk plonk.VerifyingKey[FR, G1El, G2El],
+	vkey plonk.VerifyingKey[FR, G1El, G2El],
 	proof plonk.Proof[FR, G1El, G2El],
 	witness plonk.Witness[FR],
+	accpetableFps []FingerPrintBytes, bitsPerFpVar int,
 ) error {
 
-	//1. ensure that we are using the correct verification key
-	fpVar, err := vk.FingerPrint(api)
+	// ensure that we are using the correct verification key
+	fp, err := vkey.FingerPrint(api)
 	if err != nil {
 		return err
 	}
-	AssertFpInSet(api, fpVar, _proof.UnitVkFpBytes, _proof.NbBitsPerFpVar)
+	AssertFpInSet(api, fp, accpetableFps, bitsPerFpVar)
 
-	//2. constraint witness against BeginID & EndID
-	nbIDVals := len(_proof.BeginID.Vals)
-	AssertIDWitness(api, _proof.BeginID, witness.Public[:nbIDVals], uint(_proof.BeginID.BitsPerVar))
-	AssertIDWitness(api, _proof.EndID, witness.Public[nbIDVals:nbIDVals*2], uint(_proof.EndID.BitsPerVar))
+	// constraint witness against BeginID & EndID
+	nbIDVals := len(up.BeginID.Vals)
+	AssertIDWitness(api, up.BeginID, witness.Public[:nbIDVals], uint(up.BeginID.BitsPerVar))
+	AssertIDWitness(api, up.EndID, witness.Public[nbIDVals:nbIDVals*2], uint(up.EndID.BitsPerVar))
 
-	//3. constraint witness against NbIDs
-	nbIDs := RetrieveU32ValueFromElement[FR](api, witness.Public[nbIDVals*2])
-	api.AssertIsEqual(_proof.NbIDs, nbIDs)
-
-	//4. assert proof
-	return verifier.AssertProof(vk, proof, witness, plonk.WithCompleteArithmetic())
+	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }

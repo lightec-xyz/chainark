@@ -9,22 +9,23 @@ import (
 )
 
 type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	FirstVk              plonk.VerifyingKey[FR, G1El, G2El]
-	FirstProof           plonk.Proof[FR, G1El, G2El]
-	AcceptableFirstFp    FingerPrint `gnark:",public"` //FIXME(keep), recursive Fp?
-	SecondVk             plonk.VerifyingKey[FR, G1El, G2El]
-	SecondProof          plonk.Proof[FR, G1El, G2El]
-	BeginID              LinkageID `gnark:",public"`
-	RelayID              LinkageID
-	EndID                LinkageID `gnark:",public"`
-	NbIDsInFirstWitness  frontend.Variable
-	NbIDsInSecondWitness frontend.Variable
-	NbIDs                frontend.Variable `gnark:",public"`
-	FirstWitness         plonk.Witness[FR]
-	SecondWitness        plonk.Witness[FR]
+	FirstVKey         plonk.VerifyingKey[FR, G1El, G2El]
+	FirstProof        plonk.Proof[FR, G1El, G2El]
+	AcceptableFirstFp FingerPrint `gnark:",public"`
+
+	SecondVKey  plonk.VerifyingKey[FR, G1El, G2El]
+	SecondProof plonk.Proof[FR, G1El, G2El]
+
+	BeginID LinkageID `gnark:",public"`
+	RelayID LinkageID
+	EndID   LinkageID `gnark:",public"`
+
+	FirstWitness  plonk.Witness[FR]
+	SecondWitness plonk.Witness[FR]
+
 	// some constant values passed from outside
-	GenesisVkFpBytes FingerPrintBytes
-	UnitVkFpBytes    []FingerPrintBytes
+	GenesisFpBytes FingerPrintBytes
+	UnitFpBytes    []FingerPrintBytes
 }
 
 func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
@@ -33,132 +34,116 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		return err
 	}
 
-	//1. assert the first proof, the first proof should be genesis or recursive proof
+	// assert the first proof
 	gOrR := GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]{
 		BeginID: c.BeginID,
 		EndID:   c.RelayID,
-		NbIDs:   c.NbIDsInFirstWitness,
 	}
-	err = gOrR.Assert(api, verifier, c.FirstVk, c.FirstWitness, c.AcceptableFirstFp, c.GenesisVkFpBytes, c.FirstProof)
+	err = gOrR.Assert(api, verifier, c.FirstVKey, c.FirstWitness, c.AcceptableFirstFp, c.GenesisFpBytes, c.FirstProof)
 	if err != nil {
 		return err
 	}
 
-	//2. assert the second proof, the second proof should be unit proof
+	// assert the second proof
 	unit := UnitProof[FR, G1El, G2El, GtEl]{
-		BeginID:        c.RelayID,
-		EndID:          c.EndID,
-		NbIDs:          c.NbIDsInSecondWitness,
-		UnitVkFpBytes:  c.UnitVkFpBytes,
-		NbBitsPerFpVar: c.AcceptableFirstFp.BitsPerVar,
+		BeginID: c.RelayID,
+		EndID:   c.EndID,
 	}
-	err = unit.Assert(api, verifier, c.SecondVk, c.SecondProof, c.SecondWitness)
-	if err != nil {
-		return err
-	}
-
-	//3. assert c.NbIDInFirstWit + c.NbIDInSecondWit = c.NbIDs
-	nbIDs := api.Add(c.NbIDsInFirstWitness, c.NbIDsInSecondWitness)
-	api.AssertIsEqual(c.NbIDs, nbIDs)
-
-	return nil
+	return unit.AssertRelations(api, c.SecondVKey, c.SecondProof, c.SecondWitness, c.UnitFpBytes, c.AcceptableFirstFp.BitsPerVar)
 }
 
 func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
-	nbIDVals, nbBitsPerIdVal, nbFpVals, nbBitsPerFpVal int,
-	unitCcs, genesisCcs constraint.ConstraintSystem,
-	genesisVkFpBytes FingerPrintBytes,
-	unitVkFpBytes []FingerPrintBytes) frontend.Circuit {
+	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
+	ccsUnit, ccsGenesis constraint.ConstraintSystem,
+	unitFpBytes []FingerPrintBytes,
+	genesisFpBytes FingerPrintBytes) frontend.Circuit {
 
 	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
-		FirstVk:           plonk.PlaceholderVerifyingKey[FR, G1El, G2El](genesisCcs),
-		FirstProof:        plonk.PlaceholderProof[FR, G1El, G2El](genesisCcs),
-		AcceptableFirstFp: PlaceholderFingerPrint(nbFpVals, nbBitsPerFpVal),
-		SecondVk:          plonk.PlaceholderVerifyingKey[FR, G1El, G2El](unitCcs),
-		SecondProof:       plonk.PlaceholderProof[FR, G1El, G2El](unitCcs),
-		BeginID:           PlaceholderLinkageID(nbIDVals, nbBitsPerIdVal),
-		RelayID:           PlaceholderLinkageID(nbIDVals, nbBitsPerIdVal),
-		EndID:             PlaceholderLinkageID(nbIDVals, nbBitsPerIdVal),
-		FirstWitness:      plonk.PlaceholderWitness[FR](genesisCcs),
-		SecondWitness:     plonk.PlaceholderWitness[FR](unitCcs),
+		FirstVKey:         plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsGenesis),
+		FirstProof:        plonk.PlaceholderProof[FR, G1El, G2El](ccsGenesis),
+		AcceptableFirstFp: PlaceholderFingerPrint(nbFpVals, bitsPerFpVal),
 
-		UnitVkFpBytes:    unitVkFpBytes,
-		GenesisVkFpBytes: genesisVkFpBytes,
+		SecondVKey:  plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
+		SecondProof: plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
+
+		BeginID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
+		RelayID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
+		EndID:   PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
+
+		FirstWitness:  plonk.PlaceholderWitness[FR](ccsGenesis),
+		SecondWitness: plonk.PlaceholderWitness[FR](ccsUnit),
+
+		UnitFpBytes:    unitFpBytes,
+		GenesisFpBytes: genesisFpBytes,
 	}
 }
 
 func NewRecursiveAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
-	firstVk, secondVk plonk.VerifyingKey[FR, G1El, G2El],
+	firstVkey, secondVkey plonk.VerifyingKey[FR, G1El, G2El],
 	firstProof, secondProof plonk.Proof[FR, G1El, G2El],
 	firstWitness, secondWitness plonk.Witness[FR],
 	recursiveFp FingerPrint,
 	beginID, relayID, endID LinkageID,
-	nbIDsInFirstWitness, nbIDsInSecondWitness, nbIDs frontend.Variable,
 ) frontend.Circuit {
 	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
-		FirstVk:              firstVk,
-		FirstProof:           firstProof,
-		AcceptableFirstFp:    recursiveFp,
-		SecondVk:             secondVk,
-		SecondProof:          secondProof,
-		BeginID:              beginID,
-		RelayID:              relayID,
-		EndID:                endID,
-		FirstWitness:         firstWitness,
-		SecondWitness:        secondWitness,
-		NbIDsInFirstWitness:  nbIDsInFirstWitness,
-		NbIDsInSecondWitness: nbIDsInSecondWitness,
-		NbIDs:                nbIDs,
+		FirstVKey:         firstVkey,
+		FirstProof:        firstProof,
+		AcceptableFirstFp: recursiveFp,
+
+		SecondVKey:  secondVkey,
+		SecondProof: secondProof,
+
+		BeginID: beginID,
+		RelayID: relayID,
+		EndID:   endID,
+
+		FirstWitness:  firstWitness,
+		SecondWitness: secondWitness,
 	}
 }
 
 type GenesisOrRecursiveProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
 	BeginID LinkageID
 	EndID   LinkageID
-	NbIDs   frontend.Variable
 }
 
-func (_proof *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
+func (rp *GenesisOrRecursiveProof[FR, G1El, G2El, GtEl]) Assert(
 	api frontend.API,
 	verifier *plonk.Verifier[FR, G1El, G2El, GtEl],
-	vk plonk.VerifyingKey[FR, G1El, G2El],
+	vkey plonk.VerifyingKey[FR, G1El, G2El],
 	witness plonk.Witness[FR],
-	recursiveVkFp FingerPrint,
-	genesisVkFpBytes FingerPrintBytes,
+	acceptableFp FingerPrint,
+	genesisFpBytes FingerPrintBytes,
 	proof plonk.Proof[FR, G1El, G2El]) error {
 
 	// see README / Soundness Diagram for detailed security analysis
-	// 1. ensure that vkey.FingerPrint matches either the hardcoded Genesis VKey Fp, or the recursiveFp
-	fpVar, err := vk.FingerPrint(api)
+	// 1. ensure that vkey.FingerPrint matches either the hardcoded Genesis VKey Fp, or the acceptableFp
+	fp, err := vkey.FingerPrint(api)
 	if err != nil {
 		return err
 	}
 
-	fp, err := FpValueOf(api, fpVar, recursiveVkFp.BitsPerVar)
+	vkeyFp, err := FpValueOf(api, fp, acceptableFp.BitsPerVar)
 	if err != nil {
 		return err
 	}
 
-	isRecursiveVkFp := fp.IsEqual(api, recursiveVkFp)
+	recursiveFpTest := vkeyFp.IsEqual(api, acceptableFp)
 
-	genesisVkFp := FingerPrintFromBytes(genesisVkFpBytes, recursiveVkFp.BitsPerVar)
-	isGenesisVkFp := fp.IsEqual(api, genesisVkFp)
+	genesisFp := FingerPrintFromBytes(genesisFpBytes, acceptableFp.BitsPerVar)
+	genesisFpTest := vkeyFp.IsEqual(api, genesisFp)
 
-	firstVkTest := api.Or(isRecursiveVkFp, isGenesisVkFp)
-	api.AssertIsEqual(firstVkTest, 1)
+	firstVkeyTest := api.Or(recursiveFpTest, genesisFpTest)
+	api.AssertIsEqual(firstVkeyTest, 1)
 
-	// 2. ensure that we have been using the same recursiveVkFp value, that is, constraint witness against acceptableFp
-	nbFpVars := len(recursiveVkFp.Vals)
-	AssertFpWitness(api, recursiveVkFp, witness.Public[:nbFpVars], uint(recursiveVkFp.BitsPerVar))
+	// 2. ensure that we have been using the same acceptableFp value, that is, constraint witness against acceptableFp
+	nbFpVars := len(acceptableFp.Vals)
+	AssertFpWitness(api, acceptableFp, witness.Public[:nbFpVars], uint(acceptableFp.BitsPerVar))
 
 	// 3. constraint witness against BeginID & EndID
-	nbIDVals := len(_proof.BeginID.Vals)
-	AssertIDWitness[FR](api, _proof.BeginID, witness.Public[nbFpVars:nbFpVars+nbIDVals], uint(_proof.BeginID.BitsPerVar))
-	AssertIDWitness[FR](api, _proof.EndID, witness.Public[nbFpVars+nbIDVals:nbFpVars+nbIDVals*2], uint(_proof.EndID.BitsPerVar))
+	nbIDVals := len(rp.BeginID.Vals)
+	AssertIDWitness[FR](api, rp.BeginID, witness.Public[nbFpVars:nbFpVars+nbIDVals], uint(rp.BeginID.BitsPerVar))
+	AssertIDWitness[FR](api, rp.EndID, witness.Public[nbFpVars+nbIDVals:nbFpVars+nbIDVals*2], uint(rp.EndID.BitsPerVar))
 
-	// 4. constraint witness against NbIDs
-	nbIDs := RetrieveU32ValueFromElement[FR](api, witness.Public[nbFpVars+nbIDVals*2])
-	api.AssertIsEqual(_proof.NbIDs, nbIDs)
-
-	return verifier.AssertProof(vk, proof, witness, plonk.WithCompleteArithmetic())
+	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }
