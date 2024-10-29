@@ -29,9 +29,9 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) AssertRelations(
 	AssertFpInSet(api, fp, validFps, bitsPerFpVar)
 
 	// constraint witness against BeginID & EndID
-	nbVals := len(up.BeginID.Vals)
-	AssertIDWitness(api, up.BeginID, witness.Public[:nbVals], uint(up.BeginID.BitsPerVar))
-	AssertIDWitness(api, up.EndID, witness.Public[nbVals:nbVals*2], uint(up.EndID.BitsPerVar))
+	nbVars := len(up.BeginID.Vals)
+	AssertIDWitness(api, up.BeginID, witness.Public[:nbVars], uint(up.BeginID.BitsPerVar))
+	AssertIDWitness(api, up.EndID, witness.Public[nbVars:nbVars*2], uint(up.EndID.BitsPerVar))
 
 	return verifier.AssertProof(vkey, proof, witness, plonk.WithCompleteArithmetic())
 }
