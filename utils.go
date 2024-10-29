@@ -11,16 +11,16 @@ import (
 func AssertIDWitness[FR emulated.FieldParams](
 	api frontend.API, id LinkageID, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) {
-	AssertValsWithWitnessElements[FR](api, id.Vals, witnessValues, nbMaxBitsPerVar...)
+	AssertValsVSWtnsElements[FR](api, id.Vals, witnessValues, nbMaxBitsPerVar...)
 }
 
 func AssertFpWitness[FR emulated.FieldParams](
 	api frontend.API, fp FingerPrint, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) {
-	AssertValsWithWitnessElements[FR](api, fp.Vals, witnessValues, nbMaxBitsPerVar...)
+	AssertValsVSWtnsElements[FR](api, fp.Vals, witnessValues, nbMaxBitsPerVar...)
 }
 
-func AssertValsWithWitnessElements[FR emulated.FieldParams](
+func AssertValsVSWtnsElements[FR emulated.FieldParams](
 	api frontend.API, vars []frontend.Variable, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) {
 	api.AssertIsEqual(len(witnessValues), len(vars))
