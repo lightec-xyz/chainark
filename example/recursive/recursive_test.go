@@ -51,7 +51,7 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 	circuit := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
 		unitCcs, genesisCcs,
-		genesisVkFp, unitVkFps,
+		unitVkFps, genesisVkFp,
 	)
 
 	firstVk, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](genesisVk)
@@ -104,7 +104,6 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(relayID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(endID, common.NbBitsPerIDVal),
-		8, 4, 12,
 	)
 
 	err = test.IsSolved(circuit, assignment, ecc.BN254.ScalarField())
@@ -148,7 +147,7 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 	circuit := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
 		unitCcs, genesisCcs,
-		genesisVkFp, unitVkFps,
+		unitVkFps, genesisVkFp,
 	)
 
 	_firstVk, err := utils.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
@@ -202,7 +201,6 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(relayID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(endID, common.NbBitsPerIDVal),
-		12, 2, 14,
 	)
 
 	err = test.IsSolved(circuit, assignment, ecc.BN254.ScalarField())

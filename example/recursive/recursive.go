@@ -208,6 +208,7 @@ func prove(args []string) {
 	nbIDsInFirstWit := int(relayIndex - beignIndex)
 	nbIDsInSecondWit := int(endIndex - relayIndex)
 	nbIDs := nbIDsInFirstWit + nbIDsInSecondWit
+	println("total ids in the proof", nbIDs)
 
 	recursiveVk, err := utils.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
 	if err != nil {
@@ -237,7 +238,6 @@ func prove(args []string) {
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(relayID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(endID, common.NbBitsPerIDVal),
-		nbIDsInFirstWit, nbIDsInSecondWit, nbIDs,
 	)
 
 	witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
@@ -299,7 +299,7 @@ func NewRecursiveCcs(
 ) constraint.ConstraintSystem {
 	recursive := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
-		unitCcs, genesisCcs, genesisVkFp, unitVkFps)
+		unitCcs, genesisCcs, unitVkFps, genesisVkFp)
 	recursiveCcs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, recursive)
 	if err != nil {
 		panic(err)

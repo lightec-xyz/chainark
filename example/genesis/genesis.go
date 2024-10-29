@@ -178,7 +178,6 @@ func prove(args []string) {
 		recursiveFp,
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(endID, common.NbBitsPerIDVal),
-		nbIDs,
 	)
 
 	witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())

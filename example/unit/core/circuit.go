@@ -29,20 +29,18 @@ func GetGenesisIdBytes() []byte {
 type UnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
 	BeginID chainark.LinkageID `gnark:",public"`
 	EndID   chainark.LinkageID `gnark:",public"`
-	NbIDs   frontend.Variable  `gnark:",public"` //exposed to outer circuit
-	NbIter  int
+	nbIter  int
 	// the rest is application-specific
 }
 
 func (c *UnitCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	// all application-specific
-	api.AssertIsEqual(c.NbIDs, c.NbIter)
 	input, err := c.BeginID.ToBytes(api)
 	if err != nil {
 		return err
 	}
 
-	for i := 0; i < c.NbIter; i++ {
+	for i := 0; i < c.nbIter; i++ {
 		s256, err := sha256.New(api)
 		if err != nil {
 			return err
@@ -60,7 +58,7 @@ func NewUnitCircuit(n int) frontend.Circuit {
 	return &UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		BeginID: chainark.PlaceholderLinkageID(common.NbIDVals, common.NbBitsPerIDVal),
 		EndID:   chainark.PlaceholderLinkageID(common.NbIDVals, common.NbBitsPerIDVal),
-		NbIter:  n,
+		nbIter:  n,
 	}
 }
 
@@ -71,7 +69,6 @@ func NewUnitCircuitAssignement(beginID, endID []byte, nbIDs int) frontend.Circui
 	return &UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
 		BeginID: bID,
 		EndID:   eID,
-		NbIDs:   nbIDs,
 	}
 }
 

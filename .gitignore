@@ -18,6 +18,10 @@ example/fp/*.fp
 *.proof
 *.pkey
 *.vkey
+*.pk
+*.vk
+*.wtns
+*.ccs
 
 # Test binary, built with `go test -c`
 *.test

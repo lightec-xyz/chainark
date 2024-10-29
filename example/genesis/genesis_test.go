@@ -76,7 +76,6 @@ func TestGenesis_Simulated(t *testing.T) {
 		recusiveVkFp,
 		beginID,
 		endID,
-		8,
 	)
 
 	err = test.IsSolved(circuit, assignment, ecc.BN254.ScalarField())
@@ -141,7 +140,6 @@ func TestGenesis_Plonk_BN254(t *testing.T) {
 		recusiveVkFp,
 		beginID,
 		endID,
-		8,
 	)
 
 	// let's generate the files again

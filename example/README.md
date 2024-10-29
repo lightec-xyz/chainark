@@ -56,6 +56,10 @@ Note that the fingerprints of all verification keys have been hardcoded in the [
 2. Go to the `genesis` folder, build the application, run `./genesis --setup` to generate proving key and verification key for the genesis circuit;
 3. Go to the `recursive` folder, build the application, run `./recursive --setup` to generate proving key and verification key for the recursive circuit;
 
+Or just
+```
+sh setup.sh
+```
 
 ### compute the proofs
 
@@ -67,7 +71,7 @@ Now setup is complete. Run below commands to compute the proof:
 
 Now you have exactly one proof for each and every id: the genesis id is recognized, its successor is proved with a `unit` proof, the next is proved with a `genesis` proof, and the rest with a corresponding `recursive` proof.
 
-### generate verification keys and compute proofs at once 
+### compute proofs all at once 
 ```
 sh run.sh
 ```
