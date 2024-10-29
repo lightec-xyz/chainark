@@ -1,14 +1,10 @@
 # chainark
-a ZKP library to prove a chain of any given relationship, such as block chain, signature chain, etc.
+a ZKP library to prove a chain of any given relationship, block chain, signature chain, etc. The relationship is defined by application developers, while this library focuses on how we can prove the entire relationship chain with only one proof. This library comes with an easy to understand [example](example/README.md).
 
-3 kinds circuits are defined:
-- unit circuit: several unit circuits can be predefined to handle different distance from begin to end point. for example, in below picture, 3 unit circuit A/B/C are defined to handle different distance x, y-x, and z-y.
-- genesis circuit: aborb the first unit proof to generate the genesis proof. 
-- recursive circuit: concate the first proof(genesis proof or recursive proof) to generate a new recursive proof.
+Under the hood, we have defined three roles:
 
+- Units, the circuit that application developers should implement to constraint the relationship to be proved;
+- Genesis, the first in the relationship chain;
+- Recursive, the rolling proof to attestate the chain structure from `Genesis` to the latest in the chain.
 
-<img width="635" alt="image" src="https://github.com/user-attachments/assets/4f782ada-eb07-4222-a4e2-ad8a722e2696">
-
-In this lib, genesis/recursive circuit are defined, unit circuit is defined by user.
-
-
+We have upgraded chainark to allow Units to have multiple implementations, providing a more compact proving system. In the attached example, we may have the unit to prove `1` relationship (`nextId = hash(currentId)`), or `2` (`nextNextId = hash(hash(currentId))`), etc. 
