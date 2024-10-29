@@ -49,7 +49,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		BeginID: c.RelayID,
 		EndID:   c.EndID,
 	}
-	return unit.AssertRelations(api, c.SecondVKey, c.SecondProof, c.SecondWitness, c.ValidUnitFps, c.AcceptableFirstFp.BitsPerVar)
+	return unit.AssertRelations(api, verifier, c.SecondVKey, c.SecondProof, c.SecondWitness, c.ValidUnitFps, c.AcceptableFirstFp.BitsPerVar)
 }
 
 func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
