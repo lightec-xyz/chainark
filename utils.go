@@ -63,10 +63,10 @@ func AssertValsVSWtnsElements[FR emulated.FieldParams](
 func IsIDEqualToWitness[FR emulated.FieldParams](
 	api frontend.API, id LinkageID, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) frontend.Variable {
-	return TestValsWithWitnessElements[FR](api, id.Vals, witnessValues, nbMaxBitsPerVar...)
+	return TestValsVSWtnsElements[FR](api, id.Vals, witnessValues, nbMaxBitsPerVar...)
 }
 
-func TestValsWithWitnessElements[FR emulated.FieldParams](
+func TestValsVSWtnsElements[FR emulated.FieldParams](
 	api frontend.API, vars []frontend.Variable, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) frontend.Variable {
 	api.AssertIsEqual(len(witnessValues), len(vars))
