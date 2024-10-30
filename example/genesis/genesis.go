@@ -123,12 +123,12 @@ func prove(args []string) {
 	}
 
 	//load public witness
-	_innerWit, err := operations.ReadWitness(filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.wtns", beginIndex, endIndex)))
+	_innerWitness, err := operations.ReadWitness(filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.wtns", beginIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
 
-	innerWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_innerWit)
+	innerWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_innerWitness)
 	if err != nil {
 		panic(err)
 	}
@@ -176,7 +176,7 @@ func prove(args []string) {
 	assignment := chainark.NewGenesisAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		unitVk,
 		innerProof,
-		innerWit,
+		innerWitness,
 		recursiveFp,
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(endID, common.NbBitsPerIDVal),
