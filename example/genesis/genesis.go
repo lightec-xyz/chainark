@@ -4,9 +4,6 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"github.com/lightec-xyz/chainark"
-	"github.com/lightec-xyz/common/operations"
-	common_utils "github.com/lightec-xyz/common/utils"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -22,6 +19,8 @@ import (
 	"github.com/lightec-xyz/chainark"
 	"github.com/lightec-xyz/chainark/example/common"
 	"github.com/lightec-xyz/chainark/example/utils"
+	"github.com/lightec-xyz/common/operations"
+	common_utils "github.com/lightec-xyz/common/utils"
 )
 
 var dataDir = "../testdata"

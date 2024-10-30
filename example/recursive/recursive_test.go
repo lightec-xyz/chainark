@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/hex"
+	"github.com/lightec-xyz/common/operations"
+	common_utils "github.com/lightec-xyz/common/utils"
 	"path/filepath"
 	"testing"
 
@@ -17,35 +19,35 @@ import (
 func TestRecursive_0_12_Simulated(t *testing.T) {
 	assert := test.NewAssert(t)
 
-	var unitVkFps []chainark.FingerPrintBytes
+	var unitVkFps []common_utils.FingerPrintBytes
 	for i := 3; i >= 0; i-- {
 		n := 1 << i
-		vk, err := utils.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(n)))
+		vk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(n)))
 		assert.NoError(err)
 
-		fp, err := utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](vk)
+		fp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](vk)
 		assert.NoError(err)
-		unitVkFps = append(unitVkFps, chainark.FingerPrintBytes(fp))
+		unitVkFps = append(unitVkFps, common_utils.FingerPrintBytes(fp))
 	}
 
-	genesisVk, err := utils.ReadVk(filepath.Join(dataDir, common.GenesisVkFile))
+	genesisVk, err := operations.ReadVk(filepath.Join(dataDir, common.GenesisVkFile))
 	assert.NoError(err)
 
-	genesisVkFp, err := utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](genesisVk)
+	genesisVkFp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](genesisVk)
 	assert.NoError(err)
 
-	recursiveVk, err := utils.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
+	recursiveVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
 	assert.NoError(err)
 
-	recursiveVkFpBytes, err := utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	recursiveVkFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
 	assert.NoError(err)
 
-	recursiveVkFp := chainark.FingerPrintFromBytes(recursiveVkFpBytes, common.NbBitsPerFpVal)
+	recursiveVkFp := common_utils.FingerPrintFromBytes(recursiveVkFpBytes, common.NbBitsPerFpVal)
 
-	unitCcs, err := utils.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
+	unitCcs, err := operations.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
 	assert.NoError(err)
 
-	genesisCcs, err := utils.ReadCcs(filepath.Join(dataDir, common.GenesisCcsFile))
+	genesisCcs, err := operations.ReadCcs(filepath.Join(dataDir, common.GenesisCcsFile))
 	assert.NoError(err)
 
 	circuit := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
@@ -57,31 +59,31 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 	firstVk, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](genesisVk)
 	assert.NoError(err)
 
-	_secondVk, err := utils.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(4)))
+	_secondVk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(4)))
 	assert.NoError(err)
 
 	secondVk, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_secondVk)
 	assert.NoError(err)
 
-	_firstProof, err := utils.ReadProof(filepath.Join(dataDir, "genesis_0_8.proof"))
+	_firstProof, err := operations.ReadProof(filepath.Join(dataDir, "genesis_0_8.proof"))
 	assert.NoError(err)
 
 	firstProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_firstProof)
 	assert.NoError(err)
 
-	_firstWitness, err := utils.ReadWitness(filepath.Join(dataDir, "genesis_0_8.wtns"))
+	_firstWitness, err := operations.ReadWitness(filepath.Join(dataDir, "genesis_0_8.wtns"))
 	assert.NoError(err)
 
 	firstWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_firstWitness)
 	assert.NoError(err)
 
-	_secondProof, err := utils.ReadProof(filepath.Join(dataDir, "unit_8_12.proof"))
+	_secondProof, err := operations.ReadProof(filepath.Join(dataDir, "unit_8_12.proof"))
 	assert.NoError(err)
 
 	secondProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_secondProof)
 	assert.NoError(err)
 
-	_secondWitness, err := utils.ReadWitness(filepath.Join(dataDir, "unit_8_12.wtns"))
+	_secondWitness, err := operations.ReadWitness(filepath.Join(dataDir, "unit_8_12.wtns"))
 	assert.NoError(err)
 
 	secondWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_secondWitness)
@@ -113,35 +115,35 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 func TestRecursive_0_14_Simulated(t *testing.T) {
 	assert := test.NewAssert(t)
 
-	var unitVkFps []chainark.FingerPrintBytes
+	var unitVkFps []common_utils.FingerPrintBytes
 	for i := 3; i >= 0; i-- {
 		n := 1 << i
-		vk, err := utils.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(n)))
+		vk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(n)))
 		assert.NoError(err)
 
-		fp, err := utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](vk)
+		fp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](vk)
 		assert.NoError(err)
-		unitVkFps = append(unitVkFps, chainark.FingerPrintBytes(fp))
+		unitVkFps = append(unitVkFps, common_utils.FingerPrintBytes(fp))
 	}
 
-	genesisVk, err := utils.ReadVk(filepath.Join(dataDir, common.GenesisVkFile))
+	genesisVk, err := operations.ReadVk(filepath.Join(dataDir, common.GenesisVkFile))
 	assert.NoError(err)
 
-	genesisVkFp, err := utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](genesisVk)
+	genesisVkFp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](genesisVk)
 	assert.NoError(err)
 
-	recursiveVk, err := utils.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
+	recursiveVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
 	assert.NoError(err)
 
-	recursiveVkFpBytes, err := utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	recursiveVkFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
 	assert.NoError(err)
 
-	recursiveVkFp := chainark.FingerPrintFromBytes(recursiveVkFpBytes, common.NbBitsPerFpVal)
+	recursiveVkFp := common_utils.FingerPrintFromBytes(recursiveVkFpBytes, common.NbBitsPerFpVal)
 
-	unitCcs, err := utils.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
+	unitCcs, err := operations.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
 	assert.NoError(err)
 
-	genesisCcs, err := utils.ReadCcs(filepath.Join(dataDir, common.GenesisCcsFile))
+	genesisCcs, err := operations.ReadCcs(filepath.Join(dataDir, common.GenesisCcsFile))
 	assert.NoError(err)
 
 	circuit := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
@@ -150,35 +152,35 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 		unitVkFps, genesisVkFp,
 	)
 
-	_firstVk, err := utils.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
+	_firstVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
 	assert.NoError(err)
 	firstVk, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_firstVk)
 	assert.NoError(err)
 
-	_secondVk, err := utils.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(2)))
+	_secondVk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(2)))
 	assert.NoError(err)
 	secondVk, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_secondVk)
 	assert.NoError(err)
 
-	_firstProof, err := utils.ReadProof(filepath.Join(dataDir, "recursive_0_12.proof"))
+	_firstProof, err := operations.ReadProof(filepath.Join(dataDir, "recursive_0_12.proof"))
 	assert.NoError(err)
 
 	firstProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_firstProof)
 	assert.NoError(err)
 
-	_firstWitness, err := utils.ReadWitness(filepath.Join(dataDir, "recursive_0_12.wtns"))
+	_firstWitness, err := operations.ReadWitness(filepath.Join(dataDir, "recursive_0_12.wtns"))
 	assert.NoError(err)
 
 	firstWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_firstWitness)
 	assert.NoError(err)
 
-	_secondProof, err := utils.ReadProof(filepath.Join(dataDir, "unit_12_14.proof"))
+	_secondProof, err := operations.ReadProof(filepath.Join(dataDir, "unit_12_14.proof"))
 	assert.NoError(err)
 
 	secondProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_secondProof)
 	assert.NoError(err)
 
-	_secondWitness, err := utils.ReadWitness(filepath.Join(dataDir, "unit_12_14.wtns"))
+	_secondWitness, err := operations.ReadWitness(filepath.Join(dataDir, "unit_12_14.wtns"))
 	assert.NoError(err)
 
 	secondWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_secondWitness)

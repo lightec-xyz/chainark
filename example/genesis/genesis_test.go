@@ -15,6 +15,8 @@ import (
 	"github.com/lightec-xyz/chainark"
 	"github.com/lightec-xyz/chainark/example/common"
 	"github.com/lightec-xyz/chainark/example/utils"
+	"github.com/lightec-xyz/common/operations"
+	common_utils "github.com/lightec-xyz/common/utils"
 )
 
 // TestGenesis_Simulated only can be runned after unit ccs/pk/vk/proof/witness files are generated
