@@ -1,12 +1,12 @@
 package chainark
 
 import (
-	common_utils "github.com/lightec-xyz/common/utils"
 	"math/big"
 
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/rangecheck"
+	common_utils "github.com/lightec-xyz/common/utils"
 )
 
 func AssertIDWitness[FR emulated.FieldParams](
