@@ -171,7 +171,7 @@ func prove(args []string) {
 		panic(err)
 	}
 
-	err = operations.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.wit", beginIndex, endIndex)))
+	err = operations.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.wtns", beginIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
