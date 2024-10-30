@@ -49,10 +49,10 @@ func TestGenesis_Simulated(t *testing.T) {
 
 	innerProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_innerProof)
 	assert.NoError(err)
-	_innerWit, err := operations.ReadWitness(filepath.Join(dataDir, "unit_0_8.wtns"))
+	_innerWitness, err := operations.ReadWitness(filepath.Join(dataDir, "unit_0_8.wtns"))
 	assert.NoError(err)
 
-	innerWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_innerWit)
+	innerWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_innerWitness)
 	assert.NoError(err)
 
 	beginIDBytes, err := hex.DecodeString("843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85")
@@ -74,7 +74,7 @@ func TestGenesis_Simulated(t *testing.T) {
 	assignment := chainark.NewGenesisAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		innerVk,
 		innerProof,
-		innerWit,
+		innerWitness,
 		recusiveVkFp,
 		beginID,
 		endID,
@@ -113,10 +113,10 @@ func TestGenesis_Plonk_BN254(t *testing.T) {
 
 	innerProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_innerProof)
 	assert.NoError(err)
-	_innerWit, err := operations.ReadWitness(filepath.Join(dataDir, "unit_0_8.wtns"))
+	_innerWitness, err := operations.ReadWitness(filepath.Join(dataDir, "unit_0_8.wtns"))
 	assert.NoError(err)
 
-	innerWit, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_innerWit)
+	innerWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_innerWitness)
 	assert.NoError(err)
 
 	beginIDBytes, err := hex.DecodeString("843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85")
@@ -138,7 +138,7 @@ func TestGenesis_Plonk_BN254(t *testing.T) {
 	assignment := chainark.NewGenesisAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		innerVk,
 		innerProof,
-		innerWit,
+		innerWitness,
 		recusiveVkFp,
 		beginID,
 		endID,
