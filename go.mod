@@ -5,8 +5,7 @@ go 1.22.1
 require (
 	github.com/consensys/gnark v0.11.0
 	github.com/consensys/gnark-crypto v0.14.1-0.20240909142611-e6b99e74cec1
-	github.com/lightec-xyz/common v0.0.0-20241026145125-c98ed0c64a75
-
+	github.com/lightec-xyz/common v0.0.0-20241030030109-446610bbd80d
 )
 
 require (
