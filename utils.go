@@ -1,6 +1,7 @@
 package chainark
 
 import (
+	common_utils "github.com/lightec-xyz/common/utils"
 	"math/big"
 
 	"github.com/consensys/gnark/frontend"
@@ -12,12 +13,6 @@ func AssertIDWitness[FR emulated.FieldParams](
 	api frontend.API, id LinkageID, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
 ) {
 	AssertValsVSWtnsElements[FR](api, id.Vals, witnessValues, nbMaxBitsPerVar...)
-}
-
-func AssertFpWitness[FR emulated.FieldParams](
-	api frontend.API, fp FingerPrint, witnessValues []emulated.Element[FR], nbMaxBitsPerVar ...uint,
-) {
-	AssertValsVSWtnsElements[FR](api, fp.Vals, witnessValues, nbMaxBitsPerVar...)
 }
 
 func AssertValsVSWtnsElements[FR emulated.FieldParams](
@@ -111,15 +106,15 @@ func TestValsVSWtnsElements[FR emulated.FieldParams](
 	return sum
 }
 
-func AssertFpInSet(api frontend.API, fp frontend.Variable, fpSet []FingerPrintBytes, fpBitsPerVar int) {
-	fpv, err := FpValueOf(api, fp, fpBitsPerVar)
+func AssertFpInSet(api frontend.API, fp frontend.Variable, fpSet []common_utils.FingerPrintBytes, fpBitsPerVar int) {
+	fpv, err := common_utils.FpValueOf(api, fp, fpBitsPerVar)
 	if err != nil {
 		panic(err)
 	}
 
 	sum := frontend.Variable(0)
 	for i := 0; i < len(fpSet); i++ {
-		v := FingerPrintFromBytes(fpSet[i], fpBitsPerVar)
+		v := common_utils.FingerPrintFromBytes(fpSet[i], fpBitsPerVar)
 		t := fpv.IsEqual(api, v)
 		sum = api.Or(t, sum)
 	}

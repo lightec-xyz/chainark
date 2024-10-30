@@ -4,10 +4,7 @@ import (
 	"slices"
 
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/algebra"
-	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/math/uints"
-	"github.com/consensys/gnark/std/recursion/plonk"
 )
 
 type LinkageID struct {
@@ -64,68 +61,6 @@ func LinkageIDFromU8s(api frontend.API, data []uints.U8, bitsPerVar int) Linkage
 }
 func LinkageIDFromBytes(data LinkageIDBytes, bitsPerVar int) LinkageID {
 	return LinkageID{
-		Vals:       ValsFromBytes(data, bitsPerVar),
-		BitsPerVar: bitsPerVar,
-	}
-}
-
-type FingerPrint struct {
-	Vals       []frontend.Variable
-	BitsPerVar int
-}
-
-type FingerPrintBytes []byte
-
-func NewFingerPrint(v []frontend.Variable, b int) FingerPrint {
-	return FingerPrint{
-		Vals:       v,
-		BitsPerVar: b,
-	}
-}
-func PlaceholderFingerPrint(nbVars, bitsPerVar int) FingerPrint {
-	return FingerPrint{
-		Vals:       make([]frontend.Variable, nbVars),
-		BitsPerVar: bitsPerVar,
-	}
-}
-func (fp FingerPrint) AssertIsEqual(api frontend.API, other FingerPrint) {
-	api.AssertIsEqual(fp.BitsPerVar, other.BitsPerVar)
-	api.AssertIsEqual(len(fp.Vals), len(other.Vals))
-	for i := 0; i < len(fp.Vals); i++ {
-		api.AssertIsEqual(fp.Vals[i], other.Vals[i])
-	}
-}
-func (fp FingerPrint) IsEqual(api frontend.API, other FingerPrint) frontend.Variable {
-	api.AssertIsEqual(fp.BitsPerVar, other.BitsPerVar)
-	return areVarsEquals(api, fp.Vals, other.Vals)
-}
-
-func FpValueOf(api frontend.API, v frontend.Variable, bitsPerVar int) (FingerPrint, error) {
-	bits := api.ToBinary(v)
-
-	vals := bitsToVars(api, bits, bitsPerVar)
-	return FingerPrint{
-		Vals:       vals,
-		BitsPerVar: bitsPerVar,
-	}, nil
-}
-
-func TestVkeyFp[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
-	api frontend.API, vkey plonk.VerifyingKey[FR, G1El, G2El], otherFp FingerPrint) (frontend.Variable, error) {
-
-	fpVar, err := vkey.FingerPrint(api)
-	if err != nil {
-		return 0, err
-	}
-	fp, err := FpValueOf(api, fpVar, otherFp.BitsPerVar)
-	if err != nil {
-		return 0, err
-	}
-	return fp.IsEqual(api, otherFp), nil
-}
-
-func FingerPrintFromBytes(data FingerPrintBytes, bitsPerVar int) FingerPrint {
-	return FingerPrint{
 		Vals:       ValsFromBytes(data, bitsPerVar),
 		BitsPerVar: bitsPerVar,
 	}

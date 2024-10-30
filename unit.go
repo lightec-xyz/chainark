@@ -5,6 +5,7 @@ import (
 	"github.com/consensys/gnark/std/algebra"
 	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/recursion/plonk"
+	common_utils "github.com/lightec-xyz/common/utils"
 )
 
 type UnitProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
@@ -18,7 +19,7 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) AssertRelations(
 	vkey plonk.VerifyingKey[FR, G1El, G2El],
 	proof plonk.Proof[FR, G1El, G2El],
 	witness plonk.Witness[FR],
-	validFps []FingerPrintBytes, bitsPerFpVar int,
+	validFps []common_utils.FingerPrintBytes, bitsPerFpVar int,
 ) error {
 
 	// ensure that we are using the correct verification key

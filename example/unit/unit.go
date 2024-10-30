@@ -16,6 +16,7 @@ import (
 	"github.com/lightec-xyz/chainark/example/common"
 	"github.com/lightec-xyz/chainark/example/unit/core"
 	"github.com/lightec-xyz/chainark/example/utils"
+	"github.com/lightec-xyz/common/operations"
 )
 
 var dataDir = "../testdata"
@@ -135,17 +136,17 @@ func prove(args []string) {
 	}
 
 	fmt.Println("loading ccs, pk, vk ...")
-	ccs, err := utils.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(nbIter)))
+	ccs, err := operations.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(nbIter)))
 	if err != nil {
 		panic(err)
 	}
 
-	pk, err := utils.ReadPk(filepath.Join(dataDir, utils.UnitPkFile(nbIter)))
+	pk, err := operations.ReadPk(filepath.Join(dataDir, utils.UnitPkFile(nbIter)))
 	if err != nil {
 		panic(err)
 	}
 
-	vk, err := utils.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(nbIter)))
+	vk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(nbIter)))
 	if err != nil {
 		panic(err)
 	}
@@ -165,12 +166,12 @@ func prove(args []string) {
 	}
 
 	fmt.Println("saving proof and witness ...")
-	err = utils.WriteProof(proof, filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.proof", beginIndex, endIndex)))
+	err = operations.WriteProof(proof, filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.proof", beginIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
 
-	err = utils.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.wtns", beginIndex, endIndex)))
+	err = operations.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.wit", beginIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
