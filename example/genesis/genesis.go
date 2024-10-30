@@ -19,6 +19,8 @@ import (
 	"github.com/lightec-xyz/chainark"
 	"github.com/lightec-xyz/chainark/example/common"
 	"github.com/lightec-xyz/chainark/example/utils"
+	"github.com/lightec-xyz/common/operations"
+	common_utils "github.com/lightec-xyz/common/utils"
 )
 
 var dataDir = "../testdata"
@@ -46,22 +48,22 @@ func main() {
 }
 
 func setup() {
-	var fps []chainark.FingerPrintBytes
+	var fps []common_utils.FingerPrintBytes
 	for i := 3; i >= 0; i-- {
 		n := 1 << i
-		vk, err := utils.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(n)))
+		vk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(n)))
 		if err != nil {
 			panic(err)
 		}
 
-		fp, err := utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](vk)
+		fp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](vk)
 		if err != nil {
 			panic(err)
 		}
-		fps = append(fps, chainark.FingerPrintBytes(fp))
+		fps = append(fps, common_utils.FingerPrintBytes(fp))
 	}
 
-	innerCcs, err := utils.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
+	innerCcs, err := operations.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
 	if err != nil {
 		panic(err)
 	}
@@ -77,17 +79,17 @@ func setup() {
 		panic(err)
 	}
 
-	err = utils.WriteCcs(ccs, filepath.Join(dataDir, common.GenesisCcsFile))
+	err = operations.WriteCcs(ccs, filepath.Join(dataDir, common.GenesisCcsFile))
 	if err != nil {
 		panic(err)
 	}
 
-	err = utils.WritePk(pk, filepath.Join(dataDir, common.GenesisPkFile))
+	err = operations.WritePk(pk, filepath.Join(dataDir, common.GenesisPkFile))
 	if err != nil {
 		panic(err)
 	}
 
-	err = utils.WriteVk(vk, filepath.Join(dataDir, common.GenesisVkFile))
+	err = operations.WriteVk(vk, filepath.Join(dataDir, common.GenesisVkFile))
 	if err != nil {
 		panic(err)
 	}
@@ -111,7 +113,7 @@ func prove(args []string) {
 	nbIDs := int(endIndex - beginIndex)
 
 	//load proof
-	_innerProof, err := utils.ReadProof(filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.proof", beginIndex, endIndex)))
+	_innerProof, err := operations.ReadProof(filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.proof", beginIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
@@ -121,7 +123,7 @@ func prove(args []string) {
 	}
 
 	//load public witness
-	_innerWit, err := utils.ReadWitness(filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.wtns", beginIndex, endIndex)))
+	_innerWit, err := operations.ReadWitness(filepath.Join(dataDir, fmt.Sprintf("unit_%v_%v.wtns", beginIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
@@ -150,17 +152,17 @@ func prove(args []string) {
 		panic(err)
 	}
 
-	recursiveVk, err := utils.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
+	recursiveVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
 	if err != nil {
 		panic(err)
 	}
-	recursiveFpBytes, err := utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
 	if err != nil {
 		panic(err)
 	}
-	recursiveFp := chainark.FingerPrintFromBytes(recursiveFpBytes, common.NbBitsPerFpVal)
+	recursiveFp := common_utils.FingerPrintFromBytes(recursiveFpBytes, common.NbBitsPerFpVal)
 
-	_unitVk, err := utils.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(nbIDs)))
+	_unitVk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(nbIDs)))
 	if err != nil {
 		panic(err)
 	}
@@ -191,17 +193,17 @@ func prove(args []string) {
 
 	fmt.Println("loading ccs, pk, vk ...")
 
-	ccs, err := utils.ReadCcs(filepath.Join(dataDir, common.GenesisCcsFile))
+	ccs, err := operations.ReadCcs(filepath.Join(dataDir, common.GenesisCcsFile))
 	if err != nil {
 		panic(err)
 	}
 
-	pk, err := utils.ReadPk(filepath.Join(dataDir, common.GenesisPkFile))
+	pk, err := operations.ReadPk(filepath.Join(dataDir, common.GenesisPkFile))
 	if err != nil {
 		panic(err)
 	}
 
-	vk, err := utils.ReadVk(filepath.Join(dataDir, common.GenesisVkFile))
+	vk, err := operations.ReadVk(filepath.Join(dataDir, common.GenesisVkFile))
 	if err != nil {
 		panic(err)
 	}
@@ -221,12 +223,12 @@ func prove(args []string) {
 	}
 
 	fmt.Println("saving proof and witness ...")
-	err = utils.WriteProof(proof, filepath.Join(dataDir, fmt.Sprintf("genesis_%v_%v.proof", beginIndex, endIndex)))
+	err = operations.WriteProof(proof, filepath.Join(dataDir, fmt.Sprintf("genesis_%v_%v.proof", beginIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
 
-	err = utils.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("genesis_%v_%v.wtns", beginIndex, endIndex)))
+	err = operations.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("genesis_%v_%v.wtns", beginIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
@@ -234,7 +236,7 @@ func prove(args []string) {
 
 func NewGenesisCcs(
 	unitCcs constraint.ConstraintSystem,
-	unitFps []chainark.FingerPrintBytes,
+	unitFps []common_utils.FingerPrintBytes,
 ) constraint.ConstraintSystem {
 	circuit := chainark.NewGenesisCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,

@@ -10,40 +10,6 @@ import (
 	"github.com/consensys/gnark/test"
 )
 
-type FpCircuit struct {
-	FromBytes FingerPrint
-	Bytes     []byte
-}
-
-func (c *FpCircuit) Define(api frontend.API) error {
-	fromBytes := FingerPrintFromBytes(c.Bytes, 254) // from U8s
-	fromBytes.AssertIsEqual(api, c.FromBytes)
-
-	t := fromBytes.IsEqual(api, c.FromBytes)
-	api.AssertIsEqual(t, 1)
-
-	return nil
-}
-
-func TestFp(t *testing.T) {
-	assert := test.NewAssert(t)
-	fpHex := "18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f"
-	idBytes, err := hex.DecodeString(fpHex)
-	assert.NoError(err)
-
-	circuit := FpCircuit{
-		FromBytes: PlaceholderFingerPrint(1, 254),
-		Bytes:     idBytes,
-	}
-	fpFromBytes := FingerPrintFromBytes(idBytes, 254) // from bytes
-	witness := FpCircuit{
-		FromBytes: fpFromBytes,
-	}
-
-	err = test.IsSolved(&circuit, &witness, ecc.BN254.ScalarField())
-	assert.NoError(err)
-}
-
 type IDCircuit struct {
 	FromBytes LinkageID
 	Bytes     []byte
