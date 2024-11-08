@@ -5,7 +5,7 @@ go 1.22.1
 require (
 	github.com/consensys/gnark v0.11.0
 	github.com/consensys/gnark-crypto v0.14.1-0.20240909142611-e6b99e74cec1
-	github.com/lightec-xyz/common v0.0.0-20241030030109-446610bbd80d
+	github.com/lightec-xyz/common v0.0.0-20241108032610-e82d7971f669 //TODO(keep), should update to track the latest
 )
 
 require (
@@ -34,6 +34,6 @@ require (
 )
 
 replace (
-	github.com/consensys/gnark => github.com/lightec-xyz/gnark v0.0.0-20241024072556-66f3c7ecf3b9 // v0.0.0-20240927063736-bcaeb00302cc
-	github.com/consensys/gnark-crypto => github.com/lightec-xyz/gnark-crypto v0.0.0-20240927064131-c1ad5db6d61b // v0.14.0 //v0.0.0-0.20240909142611-e6b99e74cec1
+	github.com/consensys/gnark => github.com/lightec-xyz/gnark v0.0.0-20241024072556-66f3c7ecf3b9
+	github.com/consensys/gnark-crypto => github.com/lightec-xyz/gnark-crypto v0.0.0-20240927064131-c1ad5db6d61b
 )

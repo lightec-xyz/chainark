@@ -1,6 +1,7 @@
 package chainark
 
 import (
+	common_utils "github.com/lightec-xyz/common/utils"
 	"slices"
 
 	"github.com/consensys/gnark/frontend"
@@ -34,14 +35,14 @@ func (id LinkageID) AssertIsEqual(api frontend.API, other LinkageID) {
 }
 func (id LinkageID) IsEqual(api frontend.API, other LinkageID) frontend.Variable {
 	api.AssertIsEqual(id.BitsPerVar, other.BitsPerVar)
-	return areVarsEquals(api, id.Vals, other.Vals)
+	return common_utils.AreVarsEquals(api, id.Vals, other.Vals)
 }
 func (id LinkageID) ToBytes(api frontend.API) ([]uints.U8, error) {
 	vals := make([]frontend.Variable, len(id.Vals))
 	copy(vals, id.Vals)
 	slices.Reverse[[]frontend.Variable](vals)
 
-	return ValsToU8s(api, vals, id.BitsPerVar)
+	return common_utils.ValsToU8s(api, vals, id.BitsPerVar)
 }
 
 // little-endian here
@@ -52,7 +53,7 @@ func LinkageIDFromU8s(api frontend.API, data []uints.U8, bitsPerVar int) Linkage
 		copy(bits[i*8:(i+1)*8], bs)
 	}
 
-	vals := bitsToVars(api, bits, bitsPerVar)
+	vals := common_utils.BitsToVars(api, bits, bitsPerVar)
 
 	return LinkageID{
 		Vals:       vals,
@@ -61,63 +62,7 @@ func LinkageIDFromU8s(api frontend.API, data []uints.U8, bitsPerVar int) Linkage
 }
 func LinkageIDFromBytes(data LinkageIDBytes, bitsPerVar int) LinkageID {
 	return LinkageID{
-		Vals:       ValsFromBytes(data, bitsPerVar),
+		Vals:       common_utils.ValsFromBytes(data, bitsPerVar),
 		BitsPerVar: bitsPerVar,
 	}
-}
-
-func areVarsEquals(api frontend.API, a, b []frontend.Variable) frontend.Variable {
-	api.AssertIsEqual(len(a), len(b))
-	sum := frontend.Variable(1)
-	for i := 0; i < len(a); i++ {
-		d := api.Sub(a[i], b[i])
-		t := api.IsZero(d)
-		sum = api.And(sum, t)
-	}
-
-	return sum
-}
-
-func bitsToVars(api frontend.API, bits []frontend.Variable, bitsPerVar int) []frontend.Variable {
-
-	vals := make([]frontend.Variable, 0)
-	for i := 0; i < len(bits); i += bitsPerVar {
-		val := api.FromBinary(bits[i : i+bitsPerVar]...)
-		vals = append(vals, val)
-	}
-
-	slices.Reverse[[]frontend.Variable](vals)
-	return vals
-}
-
-func ValsToU8s(api frontend.API, vals []frontend.Variable, bitsPerVar int) ([]uints.U8, error) {
-	uapi, err := uints.New[uints.U32](api)
-	if err != nil {
-		return nil, err
-	}
-
-	bytesPerVar := bitsPerVar / 8
-	ret := make([]uints.U8, bytesPerVar*len(vals))
-	for i := 0; i < len(vals); i++ {
-		bytes := uapi.ByteArrayValueOf(vals[i], bytesPerVar)
-		begin := i * bytesPerVar
-		end := begin + bytesPerVar
-		copy(ret[begin:end], bytes)
-	}
-
-	return ret, nil
-}
-
-func ValsFromBytes(data []byte, bitsPerVar int) []frontend.Variable {
-	bytesPerVar := (bitsPerVar + 7) / 8
-	ret := make([]frontend.Variable, 0)
-	for i := 0; i < len(data); i += bytesPerVar {
-		tmp := make([]byte, bytesPerVar)
-		copy(tmp, data[i:i+bytesPerVar])
-		slices.Reverse[[]byte](tmp)
-		ret = append(ret, tmp)
-	}
-
-	slices.Reverse[[]frontend.Variable](ret)
-	return ret
 }
