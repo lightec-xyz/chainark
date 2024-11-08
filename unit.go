@@ -27,7 +27,7 @@ func (up *UnitProof[FR, G1El, G2El, GtEl]) AssertRelations(
 	if err != nil {
 		return err
 	}
-	AssertFpInSet(api, fp, validFps, bitsPerFpVar)
+	common_utils.AssertFpInSet(api, fp, validFps, bitsPerFpVar)
 
 	// constraint witness against BeginID & EndID
 	nbVars := len(up.BeginID.Vals)
