@@ -5,7 +5,7 @@ go 1.22.1
 require (
 	github.com/consensys/gnark v0.11.0
 	github.com/consensys/gnark-crypto v0.14.1-0.20240909142611-e6b99e74cec1
-	github.com/lightec-xyz/common v0.0.0-20241115062350-4c84a4f2b3f5 //TODO(keep), should update to track the latest
+	github.com/lightec-xyz/common v0.0.0-20241115090947-7e3e191032b8 //TODO(keep), should update to track the latest
 )
 
 require (
