@@ -10,9 +10,8 @@ import (
 )
 
 type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	FirstVKey         plonk.VerifyingKey[FR, G1El, G2El]
-	FirstProof        plonk.Proof[FR, G1El, G2El]
-	AcceptableFirstFp common_utils.FingerPrint `gnark:",public"`
+	FirstVKey  plonk.VerifyingKey[FR, G1El, G2El]
+	FirstProof plonk.Proof[FR, G1El, G2El]
 
 	SecondVKey  plonk.VerifyingKey[FR, G1El, G2El]
 	SecondProof plonk.Proof[FR, G1El, G2El]
@@ -20,6 +19,8 @@ type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alg
 	BeginID LinkageID `gnark:",public"`
 	RelayID LinkageID
 	EndID   LinkageID `gnark:",public"`
+
+	AcceptableFirstFp common_utils.FingerPrint `gnark:",public"`
 
 	FirstWitness  plonk.Witness[FR]
 	SecondWitness plonk.Witness[FR]
@@ -46,11 +47,11 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 	}
 
 	// assert the second proof.
-	unit := UnitProof[FR, G1El, G2El, GtEl]{
+	unit := unitProof[FR, G1El, G2El, GtEl]{
 		BeginID: c.RelayID,
 		EndID:   c.EndID,
 	}
-	return unit.AssertRelations(api, verifier, c.SecondVKey, c.SecondProof, c.SecondWitness, c.ValidUnitFps, c.AcceptableFirstFp.BitsPerVar)
+	return unit.assertRelations(api, verifier, c.SecondVKey, c.SecondProof, c.SecondWitness, c.ValidUnitFps, c.AcceptableFirstFp.BitsPerVar)
 }
 
 func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
