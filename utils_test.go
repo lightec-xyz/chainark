@@ -18,7 +18,7 @@ type idTestCircuit struct {
 }
 
 func (c *idTestCircuit) Define(api frontend.API) error {
-	t := IsIDEqualToWitness[sw_bn254.ScalarField](api, c.Id, c.Eles[:], 128)
+	t := TestIDWitness[sw_bn254.ScalarField](api, c.Id, c.Eles[:], 128)
 	api.AssertIsEqual(t, c.Expected)
 
 	return nil
