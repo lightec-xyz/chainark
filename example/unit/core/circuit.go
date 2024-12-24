@@ -12,8 +12,6 @@ import (
 	"github.com/lightec-xyz/chainark/example/common"
 
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/algebra"
-	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/math/uints"
 )
 
@@ -26,16 +24,23 @@ func GetGenesisIdBytes() []byte {
 	return genesisIdBytes
 }
 
-type UnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	BeginID chainark.LinkageID `gnark:",public"`
-	EndID   chainark.LinkageID `gnark:",public"`
-	nbIter  int
+type UnitCircuit struct {
+	ChainarkComp *chainark.Unit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]
 	// the rest is application-specific
+	CountLinkedIds frontend.Variable `gnark:",public"`
+	nbIter         int
 }
 
-func (c *UnitCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
-	// all application-specific
-	input, err := c.BeginID.ToBytes(api)
+func (c *UnitCircuit) Define(api frontend.API) error {
+	err := c.ChainarkComp.Define(api) // the current implementation just returns nil, but keep the calls here
+	if err != nil {
+		return err
+	}
+
+	// now application-specific
+	api.AssertIsEqual(c.nbIter, c.CountLinkedIds)
+
+	value, err := c.ChainarkComp.BeginID.ToBytes(api)
 	if err != nil {
 		return err
 	}
@@ -45,30 +50,38 @@ func (c *UnitCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		if err != nil {
 			return err
 		}
-		s256.Write(input)
+		s256.Write(value)
 		s256.Write(uints.NewU8Array(([]byte)("chainark example")))
-		input = s256.Sum()
+		value = s256.Sum()
 	}
-	endID := chainark.LinkageIDFromU8s(api, input, common.NbBitsPerIDVal)
-	c.EndID.AssertIsEqual(api, endID)
+	endID := chainark.LinkageIDFromU8s(api, value, common.NbBitsPerIDVal)
+	c.ChainarkComp.EndID.AssertIsEqual(api, endID)
 	return nil
 }
 
-func NewUnitCircuit(n int) frontend.Circuit {
-	return &UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: chainark.PlaceholderLinkageID(common.NbIDVals, common.NbBitsPerIDVal),
-		EndID:   chainark.PlaceholderLinkageID(common.NbIDVals, common.NbBitsPerIDVal),
-		nbIter:  n,
+func NewUnitCircuit(n int) *UnitCircuit {
+	unit, err := chainark.NewUnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal)
+	if err != nil {
+		panic(err)
+	}
+
+	return &UnitCircuit{
+		ChainarkComp: unit,
+		nbIter:       n,
 	}
 }
 
-func NewUnitCircuitAssignement(beginID, endID []byte, nbIDs int) frontend.Circuit {
-	bID := chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal)
-	eID := chainark.LinkageIDFromBytes(endID, common.NbBitsPerIDVal)
+func NewUnitCircuitAssignement(beginID, endID []byte, nbIDs int) *UnitCircuit {
+	unit, err := chainark.NewUnitAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		beginID, endID, common.NbBitsPerIDVal, common.NbBitsPerFpVal)
+	if err != nil {
+		panic(err)
+	}
 
-	return &UnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{
-		BeginID: bID,
-		EndID:   eID,
+	return &UnitCircuit{
+		ChainarkComp:   unit,
+		CountLinkedIds: nbIDs,
 	}
 }
 

@@ -1,10 +1,5 @@
 package common
 
-const GenesisCcsFile = "genesis.ccs"
-const GenesisPkFile = "genesis.pk"
-const GenesisVkFile = "genesis.vk"
-const GenesisProofFile = "genesis.proof"
-
 const RecursiveCcsFile = "recursive.ccs"
 const RecursivePkFile = "recursive.pk"
 const RecursiveVkFile = "recursive.vk"
