@@ -54,33 +54,31 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		return err
 	}
 
-	return verifier.AssertDifferentProofs(c.FirstVKey.BaseVerifyingKey,
-		[]plonk.CircuitVerifyingKey[FR, G1El]{c.FirstVKey.CircuitVerifyingKey, c.SecondVKey.CircuitVerifyingKey},
-		[]frontend.Variable{0, 1},
-		[]plonk.Proof[FR, G1El, G2El]{c.FirstProof, c.SecondProof},
-		[]plonk.Witness[FR]{c.FirstWitness, c.SecondWitness},
-		plonk.WithCompleteArithmetic(),
-	)
+	err = verifier.AssertProof(c.FirstVKey, c.FirstProof, c.FirstWitness, plonk.WithCompleteArithmetic())
+	if err != nil {
+		return err
+	}
+	return verifier.AssertProof(c.SecondVKey, c.SecondProof, c.SecondWitness, plonk.WithCompleteArithmetic())
 }
 
 func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
-	ccsUnit, ccsGenesis constraint.ConstraintSystem,
+	ccsUnit constraint.ConstraintSystem,
 	unitFpBytes []common_utils.FingerPrintBytes) frontend.Circuit {
 
 	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
-		FirstVKey:  plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsGenesis),
-		FirstProof: plonk.PlaceholderProof[FR, G1El, G2El](ccsGenesis),
-		SelfFp:     common_utils.PlaceholderFingerPrint(nbFpVals, bitsPerFpVal),
-
-		SecondVKey:  plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
-		SecondProof: plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
-
 		BeginID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 		RelayID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 		EndID:   PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 
-		FirstWitness:  plonk.PlaceholderWitness[FR](ccsGenesis),
+		SelfFp: common_utils.PlaceholderFingerPrint(nbFpVals, bitsPerFpVal),
+
+		FirstVKey:    plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
+		FirstProof:   plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
+		FirstWitness: plonk.PlaceholderWitness[FR](ccsUnit),
+
+		SecondVKey:    plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
+		SecondProof:   plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
 		SecondWitness: plonk.PlaceholderWitness[FR](ccsUnit),
 
 		ValidUnitFps: unitFpBytes,

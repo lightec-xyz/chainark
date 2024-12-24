@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # generate recursive_0_12.proof and recursive_0_12.wtns
-./recursive prove  genesis.vk  genesis_0_8.proof genesis_0_8.wtns  unit_8_12.proof unit_8_12.wtns 843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85 6bb396a01d83bfa27c7476005eacb6dfd2384fc70a016ce2ee145a28288c234c 016f736042472bd002d5620f0032f37e79779ffcc56eee785e4833edee2c9176 0 8 12
+./recursive prove  unit_8.vk  unit_0_8.proof unit_0_8.wtns  unit_8_12.proof unit_8_12.wtns 843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85 6bb396a01d83bfa27c7476005eacb6dfd2384fc70a016ce2ee145a28288c234c 016f736042472bd002d5620f0032f37e79779ffcc56eee785e4833edee2c9176 0 8 12
 
 # generate recursive_0_14.proof and recursive_0_14.wtns
 ./recursive prove recursive.vk  recursive_0_12.proof recursive_0_12.wtns  unit_12_14.proof unit_12_14.wtns 843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85 016f736042472bd002d5620f0032f37e79779ffcc56eee785e4833edee2c9176 2741ec6c2ad44e316d513e8b838ad20a7262aeeac02299e5d817c60c4399f0b4 0 12 14

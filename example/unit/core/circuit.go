@@ -26,9 +26,7 @@ func GetGenesisIdBytes() []byte {
 
 type UnitCircuit struct {
 	ChainarkComp *chainark.Unit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]
-	// the rest is application-specific
-	CountLinkedIds frontend.Variable `gnark:",public"`
-	nbIter         int
+	nbIter       int
 }
 
 func (c *UnitCircuit) Define(api frontend.API) error {
@@ -36,9 +34,6 @@ func (c *UnitCircuit) Define(api frontend.API) error {
 	if err != nil {
 		return err
 	}
-
-	// now application-specific
-	api.AssertIsEqual(c.nbIter, c.CountLinkedIds)
 
 	value, err := c.ChainarkComp.BeginID.ToBytes(api)
 	if err != nil {
@@ -80,8 +75,7 @@ func NewUnitCircuitAssignement(beginID, endID []byte, nbIDs int) *UnitCircuit {
 	}
 
 	return &UnitCircuit{
-		ChainarkComp:   unit,
-		CountLinkedIds: nbIDs,
+		ChainarkComp: unit,
 	}
 }
 
