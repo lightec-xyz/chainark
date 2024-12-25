@@ -55,27 +55,17 @@ func (c *UnitCircuit) Define(api frontend.API) error {
 }
 
 func NewUnitCircuit(n int) *UnitCircuit {
-	unit, err := chainark.NewUnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal)
-	if err != nil {
-		panic(err)
-	}
-
 	return &UnitCircuit{
-		ChainarkComp: unit,
-		nbIter:       n,
+		ChainarkComp: chainark.NewUnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+			common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal),
+		nbIter: n,
 	}
 }
 
 func NewUnitCircuitAssignement(beginID, endID []byte, nbIDs int) *UnitCircuit {
-	unit, err := chainark.NewUnitAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		beginID, endID, common.NbBitsPerIDVal, common.NbBitsPerFpVal)
-	if err != nil {
-		panic(err)
-	}
-
 	return &UnitCircuit{
-		ChainarkComp: unit,
+		ChainarkComp: chainark.NewUnitAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+			beginID, endID, common.NbBitsPerIDVal, common.NbBitsPerFpVal),
 	}
 }
 

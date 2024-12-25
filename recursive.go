@@ -64,7 +64,7 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
 	ccsUnit constraint.ConstraintSystem,
-	unitFpBytes []common_utils.FingerPrintBytes) frontend.Circuit {
+	unitFpBytes []common_utils.FingerPrintBytes) *RecursiveCircuit[FR, G1El, G2El, GtEl] {
 
 	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
 		BeginID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
@@ -91,7 +91,7 @@ func NewRecursiveAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2
 	firstWitness, secondWitness plonk.Witness[FR],
 	recursiveFp common_utils.FingerPrint,
 	beginID, relayID, endID LinkageID,
-) frontend.Circuit {
+) *RecursiveCircuit[FR, G1El, G2El, GtEl] {
 	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
 		BeginID: beginID,
 		RelayID: relayID,

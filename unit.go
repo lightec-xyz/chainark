@@ -19,22 +19,22 @@ func (*Unit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 
 func NewUnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
-) (*Unit[FR, G1El, G2El, GtEl], error) {
+) *Unit[FR, G1El, G2El, GtEl] {
 	return &Unit[FR, G1El, G2El, GtEl]{
 		BeginID:       PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 		EndID:         PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 		PlaceHolderFp: common_utils.PlaceholderFingerPrint(nbFpVals, bitsPerFpVal),
-	}, nil
+	}
 }
 
 func NewUnitAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	beginId, endId LinkageIDBytes, bitsPerIdVal, bitsPerFpVal int,
-) (*Unit[FR, G1El, G2El, GtEl], error) {
+) *Unit[FR, G1El, G2El, GtEl] {
 	return &Unit[FR, G1El, G2El, GtEl]{
 		BeginID:       LinkageIDFromBytes(beginId, bitsPerIdVal),
 		EndID:         LinkageIDFromBytes(endId, bitsPerIdVal),
 		PlaceHolderFp: common_utils.FingerPrintFromBytes(getPlaceholderFp(), bitsPerFpVal),
-	}, nil
+	}
 }
 
 func getPlaceholderFp() common_utils.FingerPrintBytes {
