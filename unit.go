@@ -8,9 +8,9 @@ import (
 )
 
 type Unit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	BeginID      LinkageID                `gnark:",public"`
-	EndID        LinkageID                `gnark:",public"`
-	PlaceHoderFp common_utils.FingerPrint `gnark:",public"` // a place holder so that Unit could share the same witness alignment with Recursive
+	BeginID       LinkageID                `gnark:",public"`
+	EndID         LinkageID                `gnark:",public"`
+	PlaceHolderFp common_utils.FingerPrint `gnark:",public"` // so that Unit could share the same witness alignment with Recursive
 }
 
 func (*Unit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
@@ -21,9 +21,9 @@ func NewUnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
 ) (*Unit[FR, G1El, G2El, GtEl], error) {
 	return &Unit[FR, G1El, G2El, GtEl]{
-		BeginID:      PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
-		EndID:        PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
-		PlaceHoderFp: common_utils.PlaceholderFingerPrint(nbFpVals, bitsPerFpVal),
+		BeginID:       PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
+		EndID:         PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
+		PlaceHolderFp: common_utils.PlaceholderFingerPrint(nbFpVals, bitsPerFpVal),
 	}, nil
 }
 
@@ -31,9 +31,9 @@ func NewUnitAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El al
 	beginId, endId LinkageIDBytes, bitsPerIdVal, bitsPerFpVal int,
 ) (*Unit[FR, G1El, G2El, GtEl], error) {
 	return &Unit[FR, G1El, G2El, GtEl]{
-		BeginID:      LinkageIDFromBytes(beginId, bitsPerIdVal),
-		EndID:        LinkageIDFromBytes(endId, bitsPerIdVal),
-		PlaceHoderFp: common_utils.FingerPrintFromBytes(getPlaceholderFp(), bitsPerFpVal),
+		BeginID:       LinkageIDFromBytes(beginId, bitsPerIdVal),
+		EndID:         LinkageIDFromBytes(endId, bitsPerIdVal),
+		PlaceHolderFp: common_utils.FingerPrintFromBytes(getPlaceholderFp(), bitsPerFpVal),
 	}, nil
 }
 
