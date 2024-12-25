@@ -133,6 +133,9 @@ func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
 
 	recursiveFpTest := vkeyFp.IsEqual(api, selfFp)
 	unitFpTest, err := testVKeyInSet(api, vkey, validFps, selfFp.BitsPerVar)
+	if err != nil {
+		return err
+	}
 
 	fpTest := api.Or(recursiveFpTest, unitFpTest)
 	api.AssertIsEqual(fpTest, 1)
