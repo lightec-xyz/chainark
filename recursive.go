@@ -26,6 +26,8 @@ type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alg
 
 	// constant values passed from outside
 	ValidUnitFps []common_utils.FingerPrintBytes
+
+	optimization bool
 }
 
 // note that as we remove genesis, recursive could take in the first proof as unit, resulting in a genesis proof
@@ -54,17 +56,33 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 		return err
 	}
 
-	err = verifier.AssertProof(c.FirstVKey, c.FirstProof, c.FirstWitness, plonk.WithCompleteArithmetic())
-	if err != nil {
-		return err
+	if c.optimization {
+		return verifier.AssertDifferentProofs(c.FirstVKey.BaseVerifyingKey,
+			[]plonk.CircuitVerifyingKey[FR, G1El]{c.FirstVKey.CircuitVerifyingKey, c.SecondVKey.CircuitVerifyingKey},
+			[]frontend.Variable{0, 1},
+			[]plonk.Proof[FR, G1El, G2El]{c.FirstProof, c.SecondProof},
+			[]plonk.Witness[FR]{c.FirstWitness, c.SecondWitness},
+			plonk.WithCompleteArithmetic(),
+		)
+	} else {
+		err = verifier.AssertProof(c.FirstVKey, c.FirstProof, c.FirstWitness, plonk.WithCompleteArithmetic())
+		if err != nil {
+			return err
+		}
+		return verifier.AssertProof(c.SecondVKey, c.SecondProof, c.SecondWitness, plonk.WithCompleteArithmetic())
 	}
-	return verifier.AssertProof(c.SecondVKey, c.SecondProof, c.SecondWitness, plonk.WithCompleteArithmetic())
 }
 
 func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
 	ccsUnit constraint.ConstraintSystem,
-	unitFpBytes []common_utils.FingerPrintBytes) *RecursiveCircuit[FR, G1El, G2El, GtEl] {
+	unitFpBytes []common_utils.FingerPrintBytes,
+	opt ...bool) *RecursiveCircuit[FR, G1El, G2El, GtEl] {
+
+	optm := false
+	if len(opt) != 0 {
+		optm = opt[0]
+	}
 
 	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
 		BeginID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
@@ -82,6 +100,7 @@ func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El 
 		SecondWitness: plonk.PlaceholderWitness[FR](ccsUnit),
 
 		ValidUnitFps: unitFpBytes,
+		optimization: optm,
 	}
 }
 
