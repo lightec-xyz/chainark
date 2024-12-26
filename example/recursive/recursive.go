@@ -42,7 +42,7 @@ func main() {
 			if len(os.Args) >= 3 {
 				opt, err = strconv.ParseBool(os.Args[2])
 				if err != nil {
-					fmt.Errorf("optimization must be bool", err)
+					fmt.Printf("optimization must be bool: %s\n", os.Args[2])
 					return
 				}
 			}
