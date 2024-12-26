@@ -1,8 +1,9 @@
 package chainark
 
 import (
-	common_utils "github.com/lightec-xyz/common/utils"
 	"slices"
+
+	common_utils "github.com/lightec-xyz/common/utils"
 
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"

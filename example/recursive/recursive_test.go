@@ -2,10 +2,11 @@ package main
 
 import (
 	"encoding/hex"
-	"github.com/lightec-xyz/common/operations"
-	common_utils "github.com/lightec-xyz/common/utils"
 	"path/filepath"
 	"testing"
+
+	"github.com/lightec-xyz/common/operations"
+	common_utils "github.com/lightec-xyz/common/utils"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
@@ -30,12 +31,6 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 		unitVkFps = append(unitVkFps, common_utils.FingerPrintBytes(fp))
 	}
 
-	genesisVk, err := operations.ReadVk(filepath.Join(dataDir, common.GenesisVkFile))
-	assert.NoError(err)
-
-	genesisVkFp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](genesisVk)
-	assert.NoError(err)
-
 	recursiveVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
 	assert.NoError(err)
 
@@ -47,16 +42,15 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 	unitCcs, err := operations.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
 	assert.NoError(err)
 
-	genesisCcs, err := operations.ReadCcs(filepath.Join(dataDir, common.GenesisCcsFile))
-	assert.NoError(err)
-
 	circuit := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
-		unitCcs, genesisCcs,
-		unitVkFps, genesisVkFp,
+		unitCcs, unitVkFps,
 	)
 
-	firstVk, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](genesisVk)
+	_fristVk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(8)))
+	assert.NoError(err)
+
+	firstVk, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_fristVk)
 	assert.NoError(err)
 
 	_secondVk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(4)))
@@ -65,13 +59,13 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 	secondVk, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_secondVk)
 	assert.NoError(err)
 
-	_firstProof, err := operations.ReadProof(filepath.Join(dataDir, "genesis_0_8.proof"))
+	_firstProof, err := operations.ReadProof(filepath.Join(dataDir, "unit_0_8.proof"))
 	assert.NoError(err)
 
 	firstProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_firstProof)
 	assert.NoError(err)
 
-	_firstWitness, err := operations.ReadWitness(filepath.Join(dataDir, "genesis_0_8.wtns"))
+	_firstWitness, err := operations.ReadWitness(filepath.Join(dataDir, "unit_0_8.wtns"))
 	assert.NoError(err)
 
 	firstWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_firstWitness)
@@ -126,12 +120,6 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 		unitVkFps = append(unitVkFps, common_utils.FingerPrintBytes(fp))
 	}
 
-	genesisVk, err := operations.ReadVk(filepath.Join(dataDir, common.GenesisVkFile))
-	assert.NoError(err)
-
-	genesisVkFp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](genesisVk)
-	assert.NoError(err)
-
 	recursiveVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
 	assert.NoError(err)
 
@@ -143,13 +131,9 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 	unitCcs, err := operations.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
 	assert.NoError(err)
 
-	genesisCcs, err := operations.ReadCcs(filepath.Join(dataDir, common.GenesisCcsFile))
-	assert.NoError(err)
-
 	circuit := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
-		unitCcs, genesisCcs,
-		unitVkFps, genesisVkFp,
+		unitCcs, unitVkFps,
 	)
 
 	_firstVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
