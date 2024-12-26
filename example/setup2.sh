@@ -4,10 +4,10 @@ mkdir -p testdata
 
 cd unit
 go build .
-./unit setup
+./unit setup 150
 
 cd ../recursive
 go build .
-./recursive setup   
+./recursive setup true
 
 cd ..

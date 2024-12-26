@@ -10,7 +10,6 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/plonk"
-	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/scs"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
@@ -27,7 +26,7 @@ var dataDir = "../testdata"
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("usage: ./recursive setup")
+		fmt.Println("usage: ./recursive setup [optimization]")
 		fmt.Println("usage: ./recursive prove firstProof firstWitness secondProof secondWitness beginID relayID endID beginIndex endIndex")
 		return
 	}
@@ -37,17 +36,29 @@ func main() {
 
 	switch os.Args[1] {
 	case "setup":
-		setup()
+		{
+			opt := false
+			var err error
+			if len(os.Args) >= 3 {
+				opt, err = strconv.ParseBool(os.Args[2])
+				if err != nil {
+					fmt.Errorf("optimization must be bool", err)
+					return
+				}
+			}
+
+			setup(opt)
+		}
 	case "prove":
 		prove(os.Args[2:])
 	default:
-		fmt.Println("usage: ./recursive setup")
+		fmt.Println("usage: ./recursive setup [optimization]")
 		fmt.Println("usage: ./recursive prove firstVkFile firstProofFile firstWitFile secondProofFile secondWitFile beginID relayID endID beginIndex relayIndex endIndex")
 		return
 	}
 }
 
-func setup() {
+func setup(opt bool) {
 	var unitVkFps []common_utils.FingerPrintBytes
 	for i := 3; i >= 0; i-- {
 		n := 1 << i
@@ -63,27 +74,18 @@ func setup() {
 		unitVkFps = append(unitVkFps, common_utils.FingerPrintBytes(fp))
 	}
 
-	vk, err := operations.ReadVk(filepath.Join(dataDir, common.GenesisVkFile))
-	if err != nil {
-		panic(err)
-	}
-
-	genesisVkFp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](vk)
-	if err != nil {
-		panic(err)
-	}
-
 	unitCcs, err := operations.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
 	if err != nil {
 		panic(err)
 	}
 
-	genesisCcs, err := operations.ReadCcs(filepath.Join(dataDir, common.GenesisCcsFile))
+	recursiveCircuit := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
+		unitCcs, unitVkFps, opt)
+	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, recursiveCircuit)
 	if err != nil {
 		panic(err)
 	}
-
-	ccs := NewRecursiveCcs(unitCcs, genesisCcs, genesisVkFp, unitVkFps)
 
 	srs, srsLagrange, err := unsafekzg.NewSRS(ccs, unsafekzg.WithFSCache())
 	if err != nil {
@@ -108,7 +110,7 @@ func setup() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("saved genesis ccs, pk, vk")
+	fmt.Println("saved recursive ccs, pk, vk")
 }
 
 func prove(args []string) {
@@ -291,20 +293,4 @@ func prove(args []string) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func NewRecursiveCcs(
-	unitCcs constraint.ConstraintSystem,
-	genesisCcs constraint.ConstraintSystem,
-	genesisVkFp common_utils.FingerPrintBytes,
-	unitVkFps []common_utils.FingerPrintBytes,
-) constraint.ConstraintSystem {
-	recursive := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
-		unitCcs, genesisCcs, unitVkFps, genesisVkFp)
-	recursiveCcs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, recursive)
-	if err != nil {
-		panic(err)
-	}
-	return recursiveCcs
 }

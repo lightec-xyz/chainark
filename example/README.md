@@ -53,8 +53,7 @@ Please refer to the [general doc](../README.md).
 Note that the fingerprints of all verification keys have been hardcoded in the [example codes](./app_types.go). Usually you don't need to worry about it. But if you have modified some of the circuits, or if you are planning to build your own application based on this example, here are general procedures to follow:
 
 1. Go to the `unit` folder, build the application, run `./unit --setup` to generate proving key and verification key for the unit circuit;
-2. Go to the `genesis` folder, build the application, run `./genesis --setup` to generate proving key and verification key for the genesis circuit;
-3. Go to the `recursive` folder, build the application, run `./recursive --setup` to generate proving key and verification key for the recursive circuit;
+2. Go to the `recursive` folder, build the application, run `./recursive --setup` to generate proving key and verification key for the recursive circuit;
 
 Or just
 ```
@@ -66,10 +65,9 @@ sh setup.sh
 Now setup is complete. Run below commands to compute the proof:
 
 1. Go to the `unit` folder, run `./unit_prove.sh`;
-2. Go to the `genesis` folder, run `./genesis_prove.sh`;
-3. Go to the `recursive` folder, run `./recursive_prove.sh`.
+2. Go to the `recursive` folder, run `./recursive_prove.sh`.
 
-Now you have exactly one proof for each and every id: the genesis id is recognized, its successor is proved with a `unit` proof, the next is proved with a `genesis` proof, and the rest with a corresponding `recursive` proof.
+Now you have exactly one proof for each and every id: the genesis id is recognized, its successor is proved with a `unit` proof, and the rest with a corresponding `recursive` proof.
 
 ### compute proofs all at once 
 ```

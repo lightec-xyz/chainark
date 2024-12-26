@@ -10,7 +10,9 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/plonk"
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/scs"
 	recursive_plonk "github.com/consensys/gnark/std/recursion/plonk"
 	"github.com/consensys/gnark/test/unsafekzg"
 	"github.com/lightec-xyz/chainark/example/common"
@@ -23,7 +25,7 @@ var dataDir = "../testdata"
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("usage: ./unit setup")
+		fmt.Println("usage: ./unit setup [extra]")
 		fmt.Println("usage: ./unit prove beginIdHex endIdHex beginIndex endIndex")
 		return
 	}
@@ -33,22 +35,42 @@ func main() {
 
 	switch os.Args[1] {
 	case "setup":
-		setup()
+		{
+			extra := 0
+			var err error
+			if len(os.Args) >= 3 {
+				extra, err = strconv.Atoi(os.Args[2])
+				if err != nil {
+					fmt.Errorf("extra must be integer", err)
+					return
+				}
+			}
+			setup(extra)
+		}
 	case "prove":
 		prove(os.Args[2:])
 	default:
-		fmt.Println("usage: ./unit setup")
+		fmt.Println("usage: ./unit setup [extra]")
 		fmt.Println("usage: ./unit prove beginIdHex endIdHex beginIndex endIndex")
 		return
 	}
 }
 
-func setup() {
+func NewUnitCcs(n, extra int) constraint.ConstraintSystem {
+	unit := core.NewUnitCircuit(n, extra)
+	unitCcs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, unit)
+	if err != nil {
+		panic(err)
+	}
+	return unitCcs
+}
+
+func setup(extra int) {
 	for i := 3; i >= 0; i-- {
 		n := 1 << i
 		fmt.Printf("setting up for n = %v\n", n)
 
-		ccs := core.NewUnitCcs(n)
+		ccs := NewUnitCcs(n, extra)
 
 		// let's generate the files again
 		srs, srsLagrange, err := unsafekzg.NewSRS(ccs, unsafekzg.WithFSCache())
