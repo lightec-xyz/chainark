@@ -41,7 +41,7 @@ func main() {
 			if len(os.Args) >= 3 {
 				extra, err = strconv.Atoi(os.Args[2])
 				if err != nil {
-					fmt.Errorf("extra must be integer")
+					fmt.Printf("extra must be integer: %s\n", os.Args[2])
 					return
 				}
 			}
