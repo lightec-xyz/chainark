@@ -9,12 +9,12 @@ import (
 	common_utils "github.com/lightec-xyz/common/utils"
 )
 
-type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
+type MultiRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
 	BeginID LinkageID `gnark:",public"`
 	RelayID LinkageID
 	EndID   LinkageID `gnark:",public"`
 
-	SelfFp common_utils.FingerPrint `gnark:",public"`
+	SelfFps []common_utils.FingerPrint `gnark:",public"`
 
 	FirstVKey    plonk.VerifyingKey[FR, G1El, G2El]
 	FirstProof   plonk.Proof[FR, G1El, G2El]
@@ -26,24 +26,24 @@ type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alg
 
 	// constant values passed from outside
 	ValidUnitFps []common_utils.FingerPrintBytes
+	NbSelfFps    int
 
 	optimization bool
 }
 
-// note that as we remove genesis, recursive could take in the first proof as unit, resulting in a genesis proof
-func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
+func (c *MultiRecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	// verify the first vkey
 	rp := recursiveProof[FR, G1El, G2El, GtEl]{
 		beginID: c.BeginID,
 		endID:   c.RelayID,
 	}
-	err := rp.assertRelations(api, c.FirstVKey, c.FirstWitness, c.SelfFp, c.ValidUnitFps)
+	err := rp.assertRelations(api, c.FirstVKey, c.FirstWitness, c.SelfFps, c.ValidUnitFps)
 	if err != nil {
 		return err
 	}
 
 	// verify the second vkey
-	err = assertVkeyInSet(api, c.SecondVKey, c.ValidUnitFps, c.SelfFp.BitsPerVar)
+	err = assertVkeyInSet(api, c.SecondVKey, c.ValidUnitFps, c.SelfFps[0].BitsPerVar)
 	if err != nil {
 		return err
 	}
@@ -73,23 +73,31 @@ func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error 
 	}
 }
 
-func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+func NewMultiRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
 	ccsUnit constraint.ConstraintSystem,
-	unitFpBytes []common_utils.FingerPrintBytes,
-	opt ...bool) *RecursiveCircuit[FR, G1El, G2El, GtEl] {
+	unitFpBytes []common_utils.FingerPrintBytes, nbSelfFps int,
+	opt ...bool) *MultiRecursiveCircuit[FR, G1El, G2El, GtEl] {
 
 	optm := false
 	if len(opt) != 0 {
 		optm = opt[0]
 	}
 
-	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
+	if nbSelfFps <= 0 {
+		panic("wrong nbSelfFps")
+	}
+	selfFps := make([]common_utils.FingerPrint, nbSelfFps)
+	for i := 0; i < nbSelfFps; i++ {
+		selfFps[i] = common_utils.PlaceholderFingerPrint(nbFpVals, bitsPerFpVal)
+	}
+
+	return &MultiRecursiveCircuit[FR, G1El, G2El, GtEl]{
 		BeginID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 		RelayID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 		EndID:   PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 
-		SelfFp: common_utils.PlaceholderFingerPrint(nbFpVals, bitsPerFpVal),
+		SelfFps: selfFps,
 
 		FirstVKey:    plonk.PlaceholderVerifyingKey[FR, G1El, G2El](ccsUnit),
 		FirstProof:   plonk.PlaceholderProof[FR, G1El, G2El](ccsUnit),
@@ -100,7 +108,56 @@ func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El 
 		SecondWitness: plonk.PlaceholderWitness[FR](ccsUnit),
 
 		ValidUnitFps: unitFpBytes,
+		NbSelfFps:    nbSelfFps,
 		optimization: optm,
+	}
+}
+
+func NewMultiRecursiveAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+	firstVkey, secondVkey plonk.VerifyingKey[FR, G1El, G2El],
+	firstProof, secondProof plonk.Proof[FR, G1El, G2El],
+	firstWitness, secondWitness plonk.Witness[FR],
+	recursiveFps []common_utils.FingerPrint,
+	beginID, relayID, endID LinkageID,
+) *MultiRecursiveCircuit[FR, G1El, G2El, GtEl] {
+	return &MultiRecursiveCircuit[FR, G1El, G2El, GtEl]{
+		BeginID: beginID,
+		RelayID: relayID,
+		EndID:   endID,
+
+		SelfFps: recursiveFps,
+
+		FirstVKey:    firstVkey,
+		FirstProof:   firstProof,
+		FirstWitness: firstWitness,
+
+		SecondVKey:    secondVkey,
+		SecondProof:   secondProof,
+		SecondWitness: secondWitness,
+	}
+}
+
+type RecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
+	*MultiRecursiveCircuit[FR, G1El, G2El, GtEl]
+}
+
+// note that as we remove genesis, recursive could take in the first proof as unit, resulting in a genesis proof
+func (c *RecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
+	return c.MultiRecursiveCircuit.Define(api)
+}
+
+func NewRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
+	ccsUnit constraint.ConstraintSystem,
+	unitFpBytes []common_utils.FingerPrintBytes,
+	opt ...bool) *RecursiveCircuit[FR, G1El, G2El, GtEl] {
+
+	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
+		MultiRecursiveCircuit: NewMultiRecursiveCircuit[FR, G1El, G2El, GtEl](
+			nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal,
+			ccsUnit,
+			unitFpBytes, 1,
+			opt...),
 	}
 }
 
@@ -112,19 +169,13 @@ func NewRecursiveAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2
 	beginID, relayID, endID LinkageID,
 ) *RecursiveCircuit[FR, G1El, G2El, GtEl] {
 	return &RecursiveCircuit[FR, G1El, G2El, GtEl]{
-		BeginID: beginID,
-		RelayID: relayID,
-		EndID:   endID,
-
-		SelfFp: recursiveFp,
-
-		FirstVKey:    firstVkey,
-		FirstProof:   firstProof,
-		FirstWitness: firstWitness,
-
-		SecondVKey:    secondVkey,
-		SecondProof:   secondProof,
-		SecondWitness: secondWitness,
+		MultiRecursiveCircuit: NewMultiRecursiveAssignment[FR, G1El, G2El, GtEl](
+			firstVkey, secondVkey,
+			firstProof, secondProof,
+			firstWitness, secondWitness,
+			[]common_utils.FingerPrint{recursiveFp},
+			beginID, relayID, endID,
+		),
 	}
 }
 
@@ -137,21 +188,20 @@ func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
 	api frontend.API,
 	vkey plonk.VerifyingKey[FR, G1El, G2El],
 	witness plonk.Witness[FR],
-	selfFp common_utils.FingerPrint,
-	validFps []common_utils.FingerPrintBytes) error {
+	selfFps []common_utils.FingerPrint,
+	unitFps []common_utils.FingerPrintBytes) error {
 
-	// 1. ensure that vkey.FingerPrint matches either one of the Unit VKey Fp, or the selfFp
-	fp, err := vkey.FingerPrint(api)
-	if err != nil {
-		return err
-	}
-	vkeyFp, err := common_utils.FpValueOf(api, fp, selfFp.BitsPerVar)
-	if err != nil {
-		return err
+	// 1. ensure that vkey.FingerPrint matches either one of the Unit VKey Fp, or one of the selfFps
+	recursiveFpTest := frontend.Variable(0)
+	for i := 0; i < len(selfFps); i++ {
+		test, err := common_utils.TestVkeyFp[FR, G1El, G2El, GtEl](api, vkey, selfFps[i])
+		if err != nil {
+			return err
+		}
+		recursiveFpTest = api.Or(recursiveFpTest, test)
 	}
 
-	recursiveFpTest := vkeyFp.IsEqual(api, selfFp)
-	unitFpTest, err := testVKeyInSet(api, vkey, validFps, selfFp.BitsPerVar)
+	unitFpTest, err := testVKeyInSet(api, vkey, unitFps, selfFps[0].BitsPerVar)
 	if err != nil {
 		return err
 	}
@@ -159,10 +209,14 @@ func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
 	fpTest := api.Or(recursiveFpTest, unitFpTest)
 	api.AssertIsEqual(fpTest, 1)
 
-	// 2. ensure that we have been using the same selfFp IF a recursive circuit (not a unit)
+	// 2. ensure that we have been using the one of the selfFps IF a recursive circuit (not a unit)
 	nbIdVars := len(rp.beginID.Vals) + len(rp.endID.Vals)
-	nbFpVars := len(selfFp.Vals)
-	wtnsTest := common_utils.TestFpWitness(api, selfFp, witness.Public[nbIdVars:nbIdVars+nbFpVars], uint(selfFp.BitsPerVar))
+	nbFpVars := len(selfFps[0].Vals)
+	wtnsTest := frontend.Variable(0)
+	for i := 0; i < len(selfFps); i++ {
+		test := common_utils.TestFpWitness(api, selfFps[i], witness.Public[nbIdVars:nbIdVars+nbFpVars], uint(selfFps[0].BitsPerVar))
+		wtnsTest = api.Or(wtnsTest, test)
+	}
 	api.AssertIsEqual(recursiveFpTest, wtnsTest)
 
 	return nil
