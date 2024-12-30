@@ -17,6 +17,7 @@ import (
 	"github.com/consensys/gnark/test/unsafekzg"
 	"github.com/lightec-xyz/chainark"
 	"github.com/lightec-xyz/chainark/example/common"
+	"github.com/lightec-xyz/chainark/example/unit/core"
 	"github.com/lightec-xyz/chainark/example/utils"
 	"github.com/lightec-xyz/common/operations"
 	common_utils "github.com/lightec-xyz/common/utils"
@@ -28,11 +29,13 @@ func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("usage: ./recursive setup [optimization]")
 		fmt.Println("usage: ./recursive prove firstProof firstWitness secondProof secondWitness beginID relayID endID beginIndex endIndex")
+		fmt.Println("usage: ./recursive provehybrid firstProof firstWitness beginID relayID endID beginIndex endIndex")
 		return
 	}
 
 	flag.NewFlagSet("setup", flag.ExitOnError)
 	flag.NewFlagSet("prove", flag.ExitOnError)
+	flag.NewFlagSet("provehybrid", flag.ExitOnError)
 
 	switch os.Args[1] {
 	case "setup":
@@ -51,9 +54,12 @@ func main() {
 		}
 	case "prove":
 		prove(os.Args[2:])
+	case "provehybrid":
+		hybrid(os.Args[2:])
 	default:
 		fmt.Println("usage: ./recursive setup [optimization]")
 		fmt.Println("usage: ./recursive prove firstVkFile firstProofFile firstWitFile secondProofFile secondWitFile beginID relayID endID beginIndex relayIndex endIndex")
+		fmt.Println("usage: ./recursive provehybrid firstProof firstWitness beginID relayID endID beginIndex endIndex")
 		return
 	}
 }
@@ -79,9 +85,9 @@ func setup(opt bool) {
 		panic(err)
 	}
 
-	recursiveCircuit := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+	recursiveCircuit := chainark.NewMultiRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
-		unitCcs, unitVkFps, opt)
+		unitCcs, unitVkFps, 2, opt)
 	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, recursiveCircuit)
 	if err != nil {
 		panic(err)
@@ -111,6 +117,40 @@ func setup(opt bool) {
 		panic(err)
 	}
 	fmt.Println("saved recursive ccs, pk, vk")
+
+	iter := core.NewIteratedHashCircuit(4) // just an example, not meant to be full
+	hybridCircuit := chainark.NewHybridCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
+		unitCcs, unitVkFps, 2, iter)
+	ccs, err = frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, hybridCircuit)
+	if err != nil {
+		panic(err)
+	}
+
+	srs, srsLagrange, err = unsafekzg.NewSRS(ccs, unsafekzg.WithFSCache())
+	if err != nil {
+		panic(err)
+	}
+	pk, vk, err = plonk.Setup(ccs, srs, srsLagrange)
+	if err != nil {
+		panic(err)
+	}
+
+	err = operations.WriteCcs(ccs, filepath.Join(dataDir, common.HybridCcsFile))
+	if err != nil {
+		panic(err)
+	}
+
+	err = operations.WritePk(pk, filepath.Join(dataDir, common.HybridPkFile))
+	if err != nil {
+		panic(err)
+	}
+
+	err = operations.WriteVk(vk, filepath.Join(dataDir, common.HybridVkFile))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("saved hybrid ccs, pk, vk")
 }
 
 func prove(args []string) {
@@ -224,6 +264,16 @@ func prove(args []string) {
 	}
 	recursiveFp := common_utils.FingerPrintFromBytes(recursiveFpBytes, common.NbBitsPerFpVal)
 
+	hybridVk, err := operations.ReadVk(filepath.Join(dataDir, common.HybridVkFile))
+	if err != nil {
+		panic(err)
+	}
+	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](hybridVk)
+	if err != nil {
+		panic(err)
+	}
+	hybridFp := common_utils.FingerPrintFromBytes(hybridFpBytes, common.NbBitsPerFpVal)
+
 	_unitVk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(nbIDsInSecondWit)))
 	if err != nil {
 		panic(err)
@@ -234,11 +284,11 @@ func prove(args []string) {
 		panic(err)
 	}
 
-	assignment := chainark.NewRecursiveAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+	assignment := chainark.NewMultiRecursiveAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		firstVk, unitVk,
 		firstProof, secondProof,
 		firstWitness, secondWitness,
-		recursiveFp,
+		[]common_utils.FingerPrint{recursiveFp, hybridFp},
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(relayID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(endID, common.NbBitsPerIDVal),
@@ -265,6 +315,170 @@ func prove(args []string) {
 	}
 
 	vk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("proving ...")
+	proof, err := plonk.Prove(ccs, pk, witness,
+		recursive_plonk.GetNativeProverOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("verifying ...")
+	err = plonk.Verify(proof, vk, pubWitness,
+		recursive_plonk.GetNativeVerifierOptions(ecc.BN254.ScalarField(), ecc.BN254.ScalarField()))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("saving proof and witness ...")
+	err = operations.WriteProof(proof, filepath.Join(dataDir, fmt.Sprintf("recursive_%v_%v.proof", beignIndex, endIndex)))
+	if err != nil {
+		panic(err)
+	}
+
+	err = operations.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("recursive_%v_%v.wtns", beignIndex, endIndex)))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func hybrid(args []string) {
+	l := common.NbIDVals * common.NbBitsPerIDVal * 2 / 8
+	if len(args) != 9 {
+		panic("expected 9 parameters")
+	}
+
+	//load first vk
+	_firstVk, err := operations.ReadVk(filepath.Join(dataDir, args[0]))
+	if err != nil {
+		panic(err)
+	}
+
+	firstVk, err := recursive_plonk.ValueOfVerifyingKey[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_firstVk)
+	if err != nil {
+		panic(err)
+	}
+
+	//load first proof&witness
+	_firstProof, err := operations.ReadProof(filepath.Join(dataDir, args[1]))
+	if err != nil {
+		panic(err)
+	}
+
+	firstProof, err := recursive_plonk.ValueOfProof[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine](_firstProof)
+	if err != nil {
+		panic(err)
+	}
+
+	_firstWitness, err := operations.ReadWitness(filepath.Join(dataDir, args[2]))
+	if err != nil {
+		panic(err)
+	}
+
+	firstWitness, err := recursive_plonk.ValueOfWitness[sw_bn254.ScalarField](_firstWitness)
+	if err != nil {
+		panic(err)
+	}
+
+	beginHex := args[3]
+	relayHex := args[4]
+	endHex := args[5]
+
+	if len(beginHex) != l || len(relayHex) != l || len(endHex) != l {
+		panic("expected 32 bytes")
+	}
+
+	beginID, err := hex.DecodeString(beginHex)
+	if err != nil {
+		panic(err)
+	}
+
+	relayID, err := hex.DecodeString(relayHex)
+	if err != nil {
+		panic(err)
+	}
+
+	endID, err := hex.DecodeString(endHex)
+	if err != nil {
+		panic(err)
+	}
+
+	beignIndex, err := strconv.ParseInt(args[6], 10, 32)
+	if err != nil {
+		panic(err)
+	}
+
+	relayIndex, err := strconv.ParseInt(args[7], 10, 32)
+	if err != nil {
+		panic(err)
+	}
+
+	endIndex, err := strconv.ParseInt(args[8], 10, 32)
+	if err != nil {
+		panic(err)
+	}
+
+	nbIDsInFirstWit := int(relayIndex - beignIndex)
+	nbIDsInSecondWit := int(endIndex - relayIndex)
+	nbIDs := nbIDsInFirstWit + nbIDsInSecondWit
+	println("total ids in the proof", nbIDs)
+
+	recursiveVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
+	if err != nil {
+		panic(err)
+	}
+	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	if err != nil {
+		panic(err)
+	}
+	recursiveFp := common_utils.FingerPrintFromBytes(recursiveFpBytes, common.NbBitsPerFpVal)
+
+	hybridVk, err := operations.ReadVk(filepath.Join(dataDir, common.HybridVkFile))
+	if err != nil {
+		panic(err)
+	}
+	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](hybridVk)
+	if err != nil {
+		panic(err)
+	}
+	hybridFp := common_utils.FingerPrintFromBytes(hybridFpBytes, common.NbBitsPerFpVal)
+
+	iter := core.NewIteratedHashAssignement(relayID, endID)
+	assignment := chainark.NewHybridAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
+		firstVk,
+		firstProof,
+		firstWitness,
+		[]common_utils.FingerPrint{recursiveFp, hybridFp},
+		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
+		chainark.LinkageIDFromBytes(relayID, common.NbBitsPerIDVal),
+		chainark.LinkageIDFromBytes(endID, common.NbBitsPerIDVal),
+		iter,
+	)
+
+	witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
+	if err != nil {
+		panic(err)
+	}
+	pubWitness, err := witness.Public()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("loading ccs, pk, vk ...")
+	ccs, err := operations.ReadCcs(filepath.Join(dataDir, common.HybridCcsFile))
+	if err != nil {
+		panic(err)
+	}
+
+	pk, err := operations.ReadPk(filepath.Join(dataDir, common.HybridPkFile))
+	if err != nil {
+		panic(err)
+	}
+
+	vk, err := operations.ReadVk(filepath.Join(dataDir, common.HybridVkFile))
 	if err != nil {
 		panic(err)
 	}

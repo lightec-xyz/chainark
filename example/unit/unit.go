@@ -147,7 +147,7 @@ func prove(args []string) {
 		panic("currently, only expected 1, 2, 4, 8")
 	}
 
-	assignment := core.NewUnitCircuitAssignement(beginID, endID, nbIter)
+	assignment := core.NewUnitAssignement(beginID, endID)
 	witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	if err != nil {
 		panic(err)
