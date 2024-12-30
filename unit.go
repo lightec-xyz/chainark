@@ -44,3 +44,34 @@ func getPlaceholderFp() common_utils.FingerPrintBytes {
 	}
 	return common_utils.FingerPrintBytes(fp)
 }
+
+// users are responsible for constraining the BeginID and EndID against Extra
+type UnitCore[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
+	BeginID LinkageID
+	EndID   LinkageID
+	Extra   frontend.Circuit
+}
+
+func (c *UnitCore[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
+	return c.Extra.Define(api)
+}
+
+func NewUnitCoreCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
+) *UnitCore[FR, G1El, G2El, GtEl] {
+	return &UnitCore[FR, G1El, G2El, GtEl]{
+		BeginID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
+		EndID:   PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
+	}
+}
+
+func NewUnitCoreAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+	beginId, endId LinkageIDBytes, bitsPerIdVal, bitsPerFpVal int,
+	extra frontend.Circuit,
+) *UnitCore[FR, G1El, G2El, GtEl] {
+	return &UnitCore[FR, G1El, G2El, GtEl]{
+		BeginID: LinkageIDFromBytes(beginId, bitsPerIdVal),
+		EndID:   LinkageIDFromBytes(endId, bitsPerIdVal),
+		Extra:   extra,
+	}
+}
