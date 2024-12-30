@@ -18,7 +18,7 @@ func (*Unit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	return nil
 }
 
-func NewUnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+func NewMultiUnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal, nbPlaceHolderFps int,
 ) *Unit[FR, G1El, G2El, GtEl] {
 
@@ -34,7 +34,7 @@ func NewUnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algeb
 	}
 }
 
-func NewUnitAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+func NewMultiUnitAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	beginId, endId LinkageIDBytes, bitsPerIdVal, bitsPerFpVal int,
 	nbHolders int,
 ) *Unit[FR, G1El, G2El, GtEl] {
@@ -47,6 +47,18 @@ func NewUnitAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El al
 		EndID:          LinkageIDFromBytes(endId, bitsPerIdVal),
 		PlaceHolderFps: holders,
 	}
+}
+
+func NewUnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
+) *Unit[FR, G1El, G2El, GtEl] {
+	return NewMultiUnitCircuit[FR, G1El, G2El, GtEl](nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal, 1)
+}
+
+func NewUnitAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
+	beginId, endId LinkageIDBytes, bitsPerIdVal, bitsPerFpVal int,
+) *Unit[FR, G1El, G2El, GtEl] {
+	return NewMultiUnitAssignment[FR, G1El, G2El, GtEl](beginId, endId, bitsPerIdVal, bitsPerFpVal, 1)
 }
 
 func getPlaceholderFp() common_utils.FingerPrintBytes {
