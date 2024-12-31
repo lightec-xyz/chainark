@@ -13,7 +13,7 @@ import (
 // note that this file should be implemented by individual application
 
 type UnitCircuit struct {
-	ChainarkComp *chainark.Unit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]
+	ChainarkComp *chainark.MultiUnit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]
 	nbIter       int
 	extraCost    int
 }

@@ -7,27 +7,27 @@ import (
 	common_utils "github.com/lightec-xyz/common/utils"
 )
 
-type Unit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
+type MultiUnit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
 	BeginID          LinkageID                  `gnark:",public"`
 	EndID            LinkageID                  `gnark:",public"`
 	PlaceHolderFps   []common_utils.FingerPrint `gnark:",public"` // so that Unit could share the same witness alignment with Recursive
 	NbPlaceHolderFps int
 }
 
-func (*Unit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
+func (c *MultiUnit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	return nil
 }
 
 func NewMultiUnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal, nbPlaceHolderFps int,
-) *Unit[FR, G1El, G2El, GtEl] {
+) *MultiUnit[FR, G1El, G2El, GtEl] {
 
 	holders := make([]common_utils.FingerPrint, nbPlaceHolderFps)
 	for i := 0; i < nbPlaceHolderFps; i++ {
 		holders[i] = common_utils.PlaceholderFingerPrint(nbFpVals, bitsPerFpVal)
 	}
 
-	return &Unit[FR, G1El, G2El, GtEl]{
+	return &MultiUnit[FR, G1El, G2El, GtEl]{
 		BeginID:        PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 		EndID:          PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
 		PlaceHolderFps: holders,
@@ -37,28 +37,40 @@ func NewMultiUnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El 
 func NewMultiUnitAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	beginId, endId LinkageIDBytes, bitsPerIdVal, bitsPerFpVal int,
 	nbHolders int,
-) *Unit[FR, G1El, G2El, GtEl] {
+) *MultiUnit[FR, G1El, G2El, GtEl] {
 	holders := make([]common_utils.FingerPrint, nbHolders)
 	for i := 0; i < nbHolders; i++ {
 		holders[i] = common_utils.FingerPrintFromBytes(getPlaceholderFp(), bitsPerFpVal)
 	}
-	return &Unit[FR, G1El, G2El, GtEl]{
+	return &MultiUnit[FR, G1El, G2El, GtEl]{
 		BeginID:        LinkageIDFromBytes(beginId, bitsPerIdVal),
 		EndID:          LinkageIDFromBytes(endId, bitsPerIdVal),
 		PlaceHolderFps: holders,
 	}
 }
 
+type Unit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
+	*MultiUnit[FR, G1El, G2El, GtEl]
+}
+
+func (c *Unit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
+	return c.MultiUnit.Define(api)
+}
+
 func NewUnitCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
 ) *Unit[FR, G1El, G2El, GtEl] {
-	return NewMultiUnitCircuit[FR, G1El, G2El, GtEl](nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal, 1)
+	return &Unit[FR, G1El, G2El, GtEl]{
+		MultiUnit: NewMultiUnitCircuit[FR, G1El, G2El, GtEl](nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal, 1),
+	}
 }
 
 func NewUnitAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
 	beginId, endId LinkageIDBytes, bitsPerIdVal, bitsPerFpVal int,
 ) *Unit[FR, G1El, G2El, GtEl] {
-	return NewMultiUnitAssignment[FR, G1El, G2El, GtEl](beginId, endId, bitsPerIdVal, bitsPerFpVal, 1)
+	return &Unit[FR, G1El, G2El, GtEl]{
+		MultiUnit: NewMultiUnitAssignment[FR, G1El, G2El, GtEl](beginId, endId, bitsPerIdVal, bitsPerFpVal, 1),
+	}
 }
 
 func getPlaceholderFp() common_utils.FingerPrintBytes {

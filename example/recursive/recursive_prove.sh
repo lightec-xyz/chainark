@@ -14,9 +14,3 @@
 
 # generate recursive_0_23.proof and recursive_0_23.wtns
 ./recursive prove  hybrid.vk  recursive_0_19.proof recursive_0_19.wtns  unit_19_23.proof unit_19_23.wtns 843d12c93f9079e0d63a6101c31ac8a7eda3b78d6c4ea5b63fef0bf3eb91aa85 9ac1c5c7da8ef43bcc4cb3071e247cb5c8579a0d8420718669170ade0b04ada1  ad057c8b077361d9f5673d5faa0bf4f6c5013bb5fb745339042329976637a705 0 19 23
-
-
-
-
-
-
