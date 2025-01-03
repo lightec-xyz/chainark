@@ -209,15 +209,18 @@ func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
 	fpTest := api.Or(recursiveFpTest, unitFpTest)
 	api.AssertIsEqual(fpTest, 1)
 
-	// 2. ensure that we have been using the one of the selfFps IF a recursive circuit (not a unit)
+	// 2. ensure that we have been using the same set of selfFps IF a recursive circuit
 	nbIdVars := len(rp.beginID.Vals) + len(rp.endID.Vals)
 	nbFpVars := len(selfFps[0].Vals)
-	wtnsTest := frontend.Variable(0)
+
+	setTest := frontend.Variable(1)
 	for i := 0; i < len(selfFps); i++ {
-		test := common_utils.TestFpWitness(api, selfFps[i], witness.Public[nbIdVars:nbIdVars+nbFpVars], uint(selfFps[0].BitsPerVar))
-		wtnsTest = api.Or(wtnsTest, test)
+		begin := nbIdVars + i*nbFpVars
+		end := begin + nbFpVars
+		test := common_utils.TestFpWitness(api, selfFps[i], witness.Public[begin:end], uint(selfFps[0].BitsPerVar))
+		setTest = api.And(setTest, test)
 	}
-	api.AssertIsEqual(recursiveFpTest, wtnsTest)
+	api.AssertIsEqual(recursiveFpTest, setTest)
 
 	return nil
 }
