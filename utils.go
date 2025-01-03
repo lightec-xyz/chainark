@@ -54,3 +54,11 @@ func assertVkeyInSet[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alge
 	api.AssertIsEqual(ret, 1)
 	return nil
 }
+
+func GetPlaceholderFp() common_utils.FingerPrintBytes {
+	fp := make([]byte, 32)
+	for i := 0; i < 32; i++ {
+		fp[i] = byte(i)
+	}
+	return common_utils.FingerPrintBytes(fp)
+}

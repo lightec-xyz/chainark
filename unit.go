@@ -40,7 +40,7 @@ func NewMultiUnitAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2
 ) *MultiUnit[FR, G1El, G2El, GtEl] {
 	holders := make([]common_utils.FingerPrint, nbHolders)
 	for i := 0; i < nbHolders; i++ {
-		holders[i] = common_utils.FingerPrintFromBytes(getPlaceholderFp(), bitsPerFpVal)
+		holders[i] = common_utils.FingerPrintFromBytes(GetPlaceholderFp(), bitsPerFpVal)
 	}
 	return &MultiUnit[FR, G1El, G2El, GtEl]{
 		BeginID:        LinkageIDFromBytes(beginId, bitsPerIdVal),
@@ -71,14 +71,6 @@ func NewUnitAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El al
 	return &Unit[FR, G1El, G2El, GtEl]{
 		MultiUnit: NewMultiUnitAssignment[FR, G1El, G2El, GtEl](beginId, endId, bitsPerIdVal, bitsPerFpVal, 1),
 	}
-}
-
-func getPlaceholderFp() common_utils.FingerPrintBytes {
-	fp := make([]byte, 32)
-	for i := 0; i < 32; i++ {
-		fp[i] = byte(i)
-	}
-	return common_utils.FingerPrintBytes(fp)
 }
 
 type UnitCore[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] interface {
