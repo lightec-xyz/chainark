@@ -34,8 +34,9 @@ type MultiRecursiveCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2E
 func (c *MultiRecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	// verify the first vkey
 	rp := recursiveProof[FR, G1El, G2El, GtEl]{
-		beginID: c.BeginID,
-		endID:   c.RelayID,
+		beginID:   c.BeginID,
+		endID:     c.RelayID,
+		nbSelfFps: c.NbSelfFps,
 	}
 	err := rp.assertRelations(api, c.FirstVKey, c.FirstWitness, c.SelfFps, c.ValidUnitFps)
 	if err != nil {
@@ -180,8 +181,9 @@ func NewRecursiveAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2
 }
 
 type recursiveProof[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT] struct {
-	beginID LinkageID
-	endID   LinkageID
+	beginID   LinkageID
+	endID     LinkageID
+	nbSelfFps int
 }
 
 func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
@@ -193,7 +195,7 @@ func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
 
 	// 1. ensure that vkey.FingerPrint matches either one of the Unit VKey Fp, or one of the selfFps
 	recursiveFpTest := frontend.Variable(0)
-	for i := 0; i < len(selfFps); i++ {
+	for i := 0; i < rp.nbSelfFps; i++ {
 		test, err := common_utils.TestVkeyFp[FR, G1El, G2El, GtEl](api, vkey, selfFps[i])
 		if err != nil {
 			return err
@@ -214,7 +216,7 @@ func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
 	nbFpVars := len(selfFps[0].Vals)
 
 	setTest := frontend.Variable(0)
-	for i := 0; i < len(selfFps); i++ {
+	for i := 0; i < rp.nbSelfFps; i++ {
 		begin := nbIdVars + i*nbFpVars
 		end := begin + nbFpVars
 		test := common_utils.TestFpWitness(api, selfFps[i], witness.Public[begin:end], uint(selfFps[0].BitsPerVar))

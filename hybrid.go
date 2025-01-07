@@ -30,8 +30,9 @@ type HybridCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebr
 func (c *HybridCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 	// verify the first vkey
 	rp := recursiveProof[FR, G1El, G2El, GtEl]{
-		beginID: c.BeginID,
-		endID:   c.RelayID,
+		beginID:   c.BeginID,
+		endID:     c.RelayID,
+		nbSelfFps: c.NbSelfFps,
 	}
 	err := rp.assertRelations(api, c.FirstVKey, c.FirstWitness, c.SelfFps, c.ValidUnitFps)
 	if err != nil {
