@@ -213,12 +213,12 @@ func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
 	nbIdVars := len(rp.beginID.Vals) + len(rp.endID.Vals)
 	nbFpVars := len(selfFps[0].Vals)
 
-	setTest := frontend.Variable(1)
+	setTest := frontend.Variable(0)
 	for i := 0; i < len(selfFps); i++ {
 		begin := nbIdVars + i*nbFpVars
 		end := begin + nbFpVars
 		test := common_utils.TestFpWitness(api, selfFps[i], witness.Public[begin:end], uint(selfFps[0].BitsPerVar))
-		setTest = api.And(setTest, test)
+		setTest = api.Or(setTest, test)
 	}
 	api.AssertIsEqual(recursiveFpTest, setTest)
 
