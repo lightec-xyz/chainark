@@ -10,6 +10,3 @@ const HybridVkFile = "hybrid.vk"
 
 const NbBitsPerIDVal = 128
 const NbIDVals = 2 // linkage id is sha256, thus 256 bits = 128 * 2
-
-const NbBitsPerFpVal = 254
-const NbFpVals = 1

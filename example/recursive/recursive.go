@@ -86,7 +86,7 @@ func setup(opt bool) {
 	}
 
 	recursiveCircuit := chainark.NewMultiRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
+		common.NbIDVals, common.NbBitsPerIDVal,
 		unitCcs, unitVkFps, 2, opt)
 	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, recursiveCircuit)
 	if err != nil {
@@ -120,7 +120,7 @@ func setup(opt bool) {
 
 	iter := core.NewIteratedHashCircuit(4) // just an example, not meant to be full
 	hybridCircuit := chainark.NewHybridCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
+		common.NbIDVals, common.NbBitsPerIDVal,
 		unitCcs, unitVkFps, 2, iter)
 	ccs, err = frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, hybridCircuit)
 	if err != nil {
@@ -262,7 +262,7 @@ func prove(args []string) {
 	if err != nil {
 		panic(err)
 	}
-	recursiveFp := common_utils.FingerPrintFromBytes(recursiveFpBytes, common.NbBitsPerFpVal)
+	recursiveFp := common_utils.FingerPrintFromBytes[sw_bn254.ScalarField](recursiveFpBytes)
 
 	hybridVk, err := operations.ReadVk(filepath.Join(dataDir, common.HybridVkFile))
 	if err != nil {
@@ -272,7 +272,7 @@ func prove(args []string) {
 	if err != nil {
 		panic(err)
 	}
-	hybridFp := common_utils.FingerPrintFromBytes(hybridFpBytes, common.NbBitsPerFpVal)
+	hybridFp := common_utils.FingerPrintFromBytes[sw_bn254.ScalarField](hybridFpBytes)
 
 	_unitVk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(nbIDsInSecondWit)))
 	if err != nil {
@@ -288,7 +288,7 @@ func prove(args []string) {
 		firstVk, unitVk,
 		firstProof, secondProof,
 		firstWitness, secondWitness,
-		[]common_utils.FingerPrint{recursiveFp, hybridFp},
+		[]common_utils.FingerPrint[sw_bn254.ScalarField]{recursiveFp, hybridFp},
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(relayID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(endID, common.NbBitsPerIDVal),
@@ -434,7 +434,7 @@ func hybrid(args []string) {
 	if err != nil {
 		panic(err)
 	}
-	recursiveFp := common_utils.FingerPrintFromBytes(recursiveFpBytes, common.NbBitsPerFpVal)
+	recursiveFp := common_utils.FingerPrintFromBytes[sw_bn254.ScalarField](recursiveFpBytes)
 
 	hybridVk, err := operations.ReadVk(filepath.Join(dataDir, common.HybridVkFile))
 	if err != nil {
@@ -444,14 +444,14 @@ func hybrid(args []string) {
 	if err != nil {
 		panic(err)
 	}
-	hybridFp := common_utils.FingerPrintFromBytes(hybridFpBytes, common.NbBitsPerFpVal)
+	hybridFp := common_utils.FingerPrintFromBytes[sw_bn254.ScalarField](hybridFpBytes)
 
 	iter := core.NewIteratedHashAssignement(relayID, endID)
 	assignment := chainark.NewHybridAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		firstVk,
 		firstProof,
 		firstWitness,
-		[]common_utils.FingerPrint{recursiveFp, hybridFp},
+		[]common_utils.FingerPrint[sw_bn254.ScalarField]{recursiveFp, hybridFp},
 		chainark.LinkageIDFromBytes(beginID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(relayID, common.NbBitsPerIDVal),
 		chainark.LinkageIDFromBytes(endID, common.NbBitsPerIDVal),

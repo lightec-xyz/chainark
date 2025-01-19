@@ -14,7 +14,7 @@ type HybridCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebr
 	RelayID LinkageID
 	EndID   LinkageID `gnark:",public"`
 
-	SelfFps []common_utils.FingerPrint `gnark:",public"`
+	SelfFps []common_utils.FingerPrint[FR] `gnark:",public"`
 
 	FirstVKey    plonk.VerifyingKey[FR, G1El, G2El]
 	FirstProof   plonk.Proof[FR, G1El, G2El]
@@ -59,7 +59,7 @@ func (c *HybridCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 }
 
 func NewHybridCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El algebra.G2ElementT, GtEl algebra.GtElementT](
-	nbIdVals, bitsPerIdVal, nbFpVals, bitsPerFpVal int,
+	nbIdVals, bitsPerIdVal int,
 	ccsUnit constraint.ConstraintSystem,
 	unitFpBytes []common_utils.FingerPrintBytes, nbSelfFps int,
 	extraComp UnitCore[FR, G1El, G2El, GtEl],
@@ -68,10 +68,7 @@ func NewHybridCircuit[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El alg
 	if nbSelfFps <= 0 {
 		panic("wrong nbSelfFps")
 	}
-	selfFps := make([]common_utils.FingerPrint, nbSelfFps)
-	for i := 0; i < nbSelfFps; i++ {
-		selfFps[i] = common_utils.PlaceholderFingerPrint(nbFpVals, bitsPerFpVal)
-	}
+	selfFps := make([]common_utils.FingerPrint[FR], nbSelfFps)
 
 	return &HybridCircuit[FR, G1El, G2El, GtEl]{
 		BeginID: PlaceholderLinkageID(nbIdVals, bitsPerIdVal),
@@ -95,7 +92,7 @@ func NewHybridAssignment[FR emulated.FieldParams, G1El algebra.G1ElementT, G2El 
 	firstVkey plonk.VerifyingKey[FR, G1El, G2El],
 	firstProof plonk.Proof[FR, G1El, G2El],
 	firstWitness plonk.Witness[FR],
-	recursiveFps []common_utils.FingerPrint,
+	recursiveFps []common_utils.FingerPrint[FR],
 	beginID, relayID, endID LinkageID,
 	extraComp UnitCore[FR, G1El, G2El, GtEl],
 ) *HybridCircuit[FR, G1El, G2El, GtEl] {

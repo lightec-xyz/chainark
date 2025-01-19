@@ -37,13 +37,13 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 	recursiveVkFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
 	assert.NoError(err)
 
-	recursiveVkFp := common_utils.FingerPrintFromBytes(recursiveVkFpBytes, common.NbBitsPerFpVal)
+	recursiveVkFp := common_utils.FingerPrintFromBytes[sw_bn254.ScalarField](recursiveVkFpBytes)
 
 	unitCcs, err := operations.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
 	assert.NoError(err)
 
 	circuit := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
+		common.NbIDVals, common.NbBitsPerIDVal,
 		unitCcs, unitVkFps,
 	)
 
@@ -126,13 +126,13 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 	recursiveVkFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
 	assert.NoError(err)
 
-	recursiveVkFp := common_utils.FingerPrintFromBytes(recursiveVkFpBytes, common.NbBitsPerFpVal)
+	recursiveVkFp := common_utils.FingerPrintFromBytes[sw_bn254.ScalarField](recursiveVkFpBytes)
 
 	unitCcs, err := operations.ReadCcs(filepath.Join(dataDir, utils.UnitCcsFile(1)))
 	assert.NoError(err)
 
 	circuit := chainark.NewRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-		common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal,
+		common.NbIDVals, common.NbBitsPerIDVal,
 		unitCcs, unitVkFps,
 	)
 
