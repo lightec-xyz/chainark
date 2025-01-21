@@ -207,14 +207,21 @@ func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
 	nbIdVars := len(rp.beginID.Vals) + len(rp.endID.Vals)
 	nbFpVars := 1
 
-	setTest := frontend.Variable(1)
-	for i := 0; i < rp.nbSelfFps; i++ {
-		begin := nbIdVars + i*nbFpVars
-		end := begin + nbFpVars
-		test := common_utils.TestFpWitness(api, selfFps[i], witness.Public[begin:end])
-		setTest = api.And(setTest, test)
-	}
+	setTest := TestRecursiveFps[FR](api, witness, selfFps, nbIdVars, nbFpVars, rp.nbSelfFps)
 	api.AssertIsEqual(recursiveFpTest, setTest)
 
 	return nil
+}
+
+func TestRecursiveFps[FR emulated.FieldParams](api frontend.API, witness plonk.Witness[FR], selfFps []common_utils.FingerPrint[FR],
+	nbIdVars, nbFpVars, nbSelfFps int) frontend.Variable {
+
+	test := frontend.Variable(1)
+	for i := 0; i < nbSelfFps; i++ {
+		begin := nbIdVars + i*nbFpVars
+		end := begin + nbFpVars
+		t := common_utils.TestFpWitness(api, selfFps[i], witness.Public[begin:end])
+		test = api.And(test, t)
+	}
+	return test
 }
