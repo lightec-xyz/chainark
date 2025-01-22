@@ -176,12 +176,12 @@ func verify(args []string) {
 	}
 
 	fmt.Println("saving proof and witness ...")
-	err = operations.WriteProof(proof, filepath.Join(dataDir, fmt.Sprintf("recursive_%v_%v.proof", beignIndex, endIndex)))
+	err = operations.WriteProof(proof, filepath.Join(dataDir, fmt.Sprintf("verifier_%v_%v.proof", beignIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
 
-	err = operations.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("recursive_%v_%v.wtns", beignIndex, endIndex)))
+	err = operations.WriteWitness(pubWitness, filepath.Join(dataDir, fmt.Sprintf("verifier_%v_%v.wtns", beignIndex, endIndex)))
 	if err != nil {
 		panic(err)
 	}
