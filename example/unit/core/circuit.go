@@ -54,7 +54,7 @@ func NewUnitCircuit(n int, extra ...int) *UnitCircuit {
 	}
 	return &UnitCircuit{
 		ChainarkComp: chainark.NewMultiUnitCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-			common.NbIDVals, common.NbBitsPerIDVal, common.NbFpVals, common.NbBitsPerFpVal, 2),
+			common.NbIDVals, common.NbBitsPerIDVal, 2),
 		nbIter:    n,
 		extraCost: ext,
 	}
@@ -63,7 +63,7 @@ func NewUnitCircuit(n int, extra ...int) *UnitCircuit {
 func NewUnitAssignement(beginID, endID []byte) *UnitCircuit {
 	return &UnitCircuit{
 		ChainarkComp: chainark.NewMultiUnitAssignment[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
-			beginID, endID, common.NbBitsPerIDVal, common.NbBitsPerFpVal, 2),
+			beginID, endID, common.NbBitsPerIDVal, 2),
 	}
 }
 
