@@ -204,21 +204,21 @@ func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
 	api.AssertIsEqual(fpTest, 1)
 
 	// 2. ensure that we have been using the same set of selfFps IF a recursive circuit
-	nbIdVars := len(rp.beginID.Vals) + len(rp.endID.Vals)
+	initialOffset := len(rp.beginID.Vals) + len(rp.endID.Vals)
 	nbFpVars := 1
 
-	setTest := TestRecursiveFps[FR](api, witness, selfFps, nbIdVars, nbFpVars, rp.nbSelfFps)
+	setTest := TestRecursiveFps[FR](api, witness, selfFps, initialOffset, nbFpVars, rp.nbSelfFps)
 	api.AssertIsEqual(recursiveFpTest, setTest)
 
 	return nil
 }
 
 func TestRecursiveFps[FR emulated.FieldParams](api frontend.API, witness plonk.Witness[FR], selfFps []common_utils.FingerPrint[FR],
-	nbIdVars, nbFpVars, nbSelfFps int) frontend.Variable {
+	initialOffset, nbFpVars, nbSelfFps int) frontend.Variable {
 
 	test := frontend.Variable(1)
 	for i := 0; i < nbSelfFps; i++ {
-		begin := nbIdVars + i*nbFpVars
+		begin := initialOffset + i*nbFpVars
 		end := begin + nbFpVars
 		t := common_utils.TestFpWitness(api, selfFps[i], witness.Public[begin:end])
 		test = api.And(test, t)

@@ -30,12 +30,14 @@ func main() {
 		fmt.Println("usage: ./recursive setup [optimization]")
 		fmt.Println("usage: ./recursive prove firstProof firstWitness secondProof secondWitness beginID relayID endID beginIndex endIndex")
 		fmt.Println("usage: ./recursive provehybrid firstProof firstWitness beginID relayID endID beginIndex endIndex")
+		fmt.Println("usage: ./recursive verify proof witness beginID endID beginIndex endIndex")
 		return
 	}
 
 	flag.NewFlagSet("setup", flag.ExitOnError)
 	flag.NewFlagSet("prove", flag.ExitOnError)
 	flag.NewFlagSet("provehybrid", flag.ExitOnError)
+	flag.NewFlagSet("verify", flag.ExitOnError)
 
 	switch os.Args[1] {
 	case "setup":
@@ -56,10 +58,13 @@ func main() {
 		prove(os.Args[2:])
 	case "provehybrid":
 		hybrid(os.Args[2:])
+	case "verify":
+		verify(os.Args[2:])
 	default:
 		fmt.Println("usage: ./recursive setup [optimization]")
 		fmt.Println("usage: ./recursive prove firstVkFile firstProofFile firstWitFile secondProofFile secondWitFile beginID relayID endID beginIndex relayIndex endIndex")
 		fmt.Println("usage: ./recursive provehybrid firstProof firstWitness beginID relayID endID beginIndex endIndex")
+		fmt.Println("usage: ./recursive verify proof witness beginID endID beginIndex endIndex")
 		return
 	}
 }
@@ -88,21 +93,21 @@ func setup(opt bool) {
 	recursiveCircuit := chainark.NewMultiRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal,
 		unitCcs, unitVkFps, 2, opt)
-	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, recursiveCircuit)
+	recursiveCcs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, recursiveCircuit)
 	if err != nil {
 		panic(err)
 	}
 
-	srs, srsLagrange, err := unsafekzg.NewSRS(ccs, unsafekzg.WithFSCache())
+	srs, srsLagrange, err := unsafekzg.NewSRS(recursiveCcs, unsafekzg.WithFSCache())
 	if err != nil {
 		panic(err)
 	}
-	pk, vk, err := plonk.Setup(ccs, srs, srsLagrange)
+	pk, recursiveVk, err := plonk.Setup(recursiveCcs, srs, srsLagrange)
 	if err != nil {
 		panic(err)
 	}
 
-	err = operations.WriteCcs(ccs, filepath.Join(dataDir, common.RecursiveCcsFile))
+	err = operations.WriteCcs(recursiveCcs, filepath.Join(dataDir, common.RecursiveCcsFile))
 	if err != nil {
 		panic(err)
 	}
@@ -112,7 +117,7 @@ func setup(opt bool) {
 		panic(err)
 	}
 
-	err = operations.WriteVk(vk, filepath.Join(dataDir, common.RecursiveVkFile))
+	err = operations.WriteVk(recursiveVk, filepath.Join(dataDir, common.RecursiveVkFile))
 	if err != nil {
 		panic(err)
 	}
@@ -122,21 +127,21 @@ func setup(opt bool) {
 	hybridCircuit := chainark.NewHybridCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal,
 		unitCcs, unitVkFps, 2, iter)
-	ccs, err = frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, hybridCircuit)
+	hybridCcs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, hybridCircuit)
 	if err != nil {
 		panic(err)
 	}
 
-	srs, srsLagrange, err = unsafekzg.NewSRS(ccs, unsafekzg.WithFSCache())
+	srs, srsLagrange, err = unsafekzg.NewSRS(hybridCcs, unsafekzg.WithFSCache())
 	if err != nil {
 		panic(err)
 	}
-	pk, vk, err = plonk.Setup(ccs, srs, srsLagrange)
+	pk, hybridVk, err := plonk.Setup(hybridCcs, srs, srsLagrange)
 	if err != nil {
 		panic(err)
 	}
 
-	err = operations.WriteCcs(ccs, filepath.Join(dataDir, common.HybridCcsFile))
+	err = operations.WriteCcs(hybridCcs, filepath.Join(dataDir, common.HybridCcsFile))
 	if err != nil {
 		panic(err)
 	}
@@ -146,11 +151,55 @@ func setup(opt bool) {
 		panic(err)
 	}
 
-	err = operations.WriteVk(vk, filepath.Join(dataDir, common.HybridVkFile))
+	err = operations.WriteVk(hybridVk, filepath.Join(dataDir, common.HybridVkFile))
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("saved hybrid ccs, pk, vk")
+
+	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	if err != nil {
+		panic(err)
+	}
+	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](hybridVk)
+	if err != nil {
+		panic(err)
+	}
+
+	verifierCircuit, err := NewRecursiveVerifierCircuit(
+		hybridCcs,
+		[]common_utils.FingerPrintBytes{recursiveFpBytes, hybridFpBytes},
+		common.NbIDVals, 1, 2,
+	)
+	verifierCcs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, verifierCircuit)
+	if err != nil {
+		panic(err)
+	}
+
+	srs, srsLagrange, err = unsafekzg.NewSRS(verifierCcs, unsafekzg.WithFSCache())
+	if err != nil {
+		panic(err)
+	}
+	pk, verifierVk, err := plonk.Setup(verifierCcs, srs, srsLagrange)
+	if err != nil {
+		panic(err)
+	}
+
+	err = operations.WriteCcs(verifierCcs, filepath.Join(dataDir, common.VerifierCcsFile))
+	if err != nil {
+		panic(err)
+	}
+
+	err = operations.WritePk(pk, filepath.Join(dataDir, common.VerifierPkFile))
+	if err != nil {
+		panic(err)
+	}
+
+	err = operations.WriteVk(verifierVk, filepath.Join(dataDir, common.VerifierVkFile))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("saved verifier ccs, pk, vk")
 }
 
 func prove(args []string) {
