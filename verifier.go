@@ -28,7 +28,7 @@ func (c *Verifier[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		panic("length mismatch")
 	}
 
-	vkeyFp, err := c.VKey.FingerPrint(api)
+	vkeyFp, err := common_utils.InCircuitFingerPrint[FR, G1El, G2El](api, &c.VKey)
 	if err != nil {
 		return err
 	}
