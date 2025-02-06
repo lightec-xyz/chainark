@@ -44,7 +44,7 @@ func (c *MultiRecursiveCircuit[FR, G1El, G2El, GtEl]) Define(api frontend.API) e
 	}
 
 	// verify the second vkey
-	secondFp, err := c.SecondVKey.FingerPrint(api)
+	secondFp, err := common_utils.InCircuitFingerPrint[FR, G1El, G2El](api, &c.SecondVKey)
 	if err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func (rp *recursiveProof[FR, G1El, G2El, GtEl]) assertRelations(
 	unitFps []common_utils.FingerPrintBytes) error {
 
 	// 1. ensure that vkey.FingerPrint matches either one of the Unit VKey Fp, or one of the selfFps
-	vkeyFp, err := vkey.FingerPrint(api)
+	vkeyFp, err := common_utils.InCircuitFingerPrint[FR, G1El, G2El](api, &vkey)
 	if err != nil {
 		return err
 	}
