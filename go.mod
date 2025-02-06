@@ -5,7 +5,7 @@ go 1.22.1
 require (
 	github.com/consensys/gnark v0.12.0
 	github.com/consensys/gnark-crypto v0.15.0
-	github.com/lightec-xyz/common v0.2.4
+	github.com/lightec-xyz/common v0.2.5
 )
 
 require (
@@ -33,6 +33,6 @@ require (
 )
 
 replace (
-	github.com/consensys/gnark => github.com/lightec-xyz/gnark v0.0.0-20250205121928-31d59f8fc8d0
+	github.com/consensys/gnark => github.com/lightec-xyz/gnark v0.0.0-20250206103140-632ea913a3fa
 	github.com/consensys/gnark-crypto => github.com/lightec-xyz/gnark-crypto v0.0.0-20250205121130-c9c202709eab
 )
