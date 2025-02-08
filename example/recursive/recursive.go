@@ -42,17 +42,17 @@ func main() {
 	switch os.Args[1] {
 	case "setup":
 		{
-			opt := false
+			extra := 0
 			var err error
 			if len(os.Args) >= 3 {
-				opt, err = strconv.ParseBool(os.Args[2])
+				extra, err = strconv.Atoi(os.Args[2])
 				if err != nil {
-					fmt.Printf("optimization must be bool: %s\n", os.Args[2])
+					fmt.Printf("extra must be integer: %s\n", os.Args[2])
 					return
 				}
 			}
 
-			setup(opt)
+			setup(extra)
 		}
 	case "prove":
 		prove(os.Args[2:])
@@ -61,7 +61,7 @@ func main() {
 	case "verify":
 		verify(os.Args[2:])
 	default:
-		fmt.Println("usage: ./recursive setup [optimization]")
+		fmt.Println("usage: ./recursive setup [extra]")
 		fmt.Println("usage: ./recursive prove firstVkFile firstProofFile firstWitFile secondProofFile secondWitFile beginID relayID endID beginIndex relayIndex endIndex")
 		fmt.Println("usage: ./recursive provehybrid firstProof firstWitness beginID relayID endID beginIndex endIndex")
 		fmt.Println("usage: ./recursive verify proof witness beginID endID beginIndex endIndex")
@@ -69,7 +69,7 @@ func main() {
 	}
 }
 
-func setup(opt bool) {
+func setup(extra int) {
 	var unitVkFps []common_utils.FingerPrintBytes
 	for i := 3; i >= 0; i-- {
 		n := 1 << i
@@ -92,7 +92,7 @@ func setup(opt bool) {
 
 	recursiveCircuit := chainark.NewMultiRecursiveCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal,
-		unitCcs, unitVkFps, 2, opt)
+		unitCcs, unitVkFps, 2, extra > 0)
 	recursiveCcs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, recursiveCircuit)
 	if err != nil {
 		panic(err)
@@ -123,7 +123,7 @@ func setup(opt bool) {
 	}
 	fmt.Println("saved recursive ccs, pk, vk")
 
-	iter := core.NewIteratedHashCircuit(4) // just an example, not meant to be full
+	iter := core.NewIteratedHashCircuit(4, extra) // just an example, not meant to be full
 	hybridCircuit := chainark.NewHybridCircuit[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](
 		common.NbIDVals, common.NbBitsPerIDVal,
 		unitCcs, unitVkFps, 2, iter)

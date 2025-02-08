@@ -26,25 +26,12 @@ func (c *UnitCircuit) Define(api frontend.API) error {
 	}
 
 	iter := IteratedHash{
-		BeginID: c.ChainarkComp.BeginID,
-		EndID:   c.ChainarkComp.EndID,
-		nbIter:  c.nbIter,
+		BeginID:   c.ChainarkComp.BeginID,
+		EndID:     c.ChainarkComp.EndID,
+		nbIter:    c.nbIter,
+		extraCost: c.extraCost,
 	}
-	err = iter.Define(api) // taking a shortcut without treating IteratedHash as a circuit
-	if err != nil {
-		return err
-	}
-
-	for i := 0; i < c.extraCost; i++ {
-		s256, err := sha256.New(api)
-		if err != nil {
-			return err
-		}
-		s256.Write(uints.NewU8Array(([]byte)("chainark example")))
-		s256.Sum()
-	}
-
-	return nil
+	return iter.Define(api) // taking a shortcut without treating IteratedHash as a circuit
 }
 
 func NewUnitCircuit(n int, extra ...int) *UnitCircuit {
@@ -68,9 +55,10 @@ func NewUnitAssignement(beginID, endID []byte) *UnitCircuit {
 }
 
 type IteratedHash struct {
-	BeginID chainark.LinkageID
-	EndID   chainark.LinkageID
-	nbIter  int
+	BeginID   chainark.LinkageID
+	EndID     chainark.LinkageID
+	nbIter    int
+	extraCost int
 }
 
 func (c *IteratedHash) GetBeginID() chainark.LinkageID {
@@ -99,14 +87,24 @@ func (c *IteratedHash) Define(api frontend.API) error {
 	endID := chainark.LinkageIDFromU8s(api, value, common.NbBitsPerIDVal)
 	c.EndID.AssertIsEqual(api, endID)
 
+	for i := 0; i < c.extraCost; i++ {
+		s256, err := sha256.New(api)
+		if err != nil {
+			return err
+		}
+		s256.Write(uints.NewU8Array(([]byte)("chainark example")))
+		s256.Sum()
+	}
+
 	return nil
 }
 
-func NewIteratedHashCircuit(n int) *IteratedHash {
+func NewIteratedHashCircuit(n, extra int) *IteratedHash {
 	return &IteratedHash{
-		BeginID: chainark.PlaceholderLinkageID(common.NbIDVals, common.NbBitsPerIDVal),
-		EndID:   chainark.PlaceholderLinkageID(common.NbIDVals, common.NbBitsPerIDVal),
-		nbIter:  n,
+		BeginID:   chainark.PlaceholderLinkageID(common.NbIDVals, common.NbBitsPerIDVal),
+		EndID:     chainark.PlaceholderLinkageID(common.NbIDVals, common.NbBitsPerIDVal),
+		nbIter:    n,
+		extraCost: extra,
 	}
 }
 

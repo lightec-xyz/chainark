@@ -8,6 +8,6 @@ go build .
 
 cd ../recursive
 go build .
-./recursive setup true
+./recursive setup 50
 
 cd ..
