@@ -49,30 +49,24 @@ func LinkageIDFromBytes(data LinkageIDBytes, bitsPerVar int) LinkageID {
 }
 
 func LinkageIDFromU8s(api frontend.API, data []uints.U8, bitsPerVar int) LinkageID {
-	bits := make([]frontend.Variable, len(data)*8)
-	for i := 0; i < len(data); i++ {
+	n := len(data)
+	bits := make([]frontend.Variable, n*8)
+
+	for i := 0; i < n; i++ {
 		bs := api.ToBinary(data[i].Val, 8)
-		copy(bits[i*8:(i+1)*8], bs)
+		copy(bits[(n-1-i)*8:(n-i)*8], bs) // reverse order in bytes
 	}
 
-	vals := bitsToVars(api, bits, bitsPerVar)
+	vals := make([]frontend.Variable, 0)
+	for i := len(bits); i > 0; i -= bitsPerVar {
+		val := api.FromBinary(bits[i-bitsPerVar : i]...) // reverse order in vars
+		vals = append(vals, val)
+	}
 
 	return LinkageID{
 		Vals:       vals,
 		BitsPerVar: bitsPerVar,
 	}
-}
-
-func bitsToVars(api frontend.API, bits []frontend.Variable, bitsPerVar int) []frontend.Variable {
-
-	vals := make([]frontend.Variable, 0)
-	for i := 0; i < len(bits); i += bitsPerVar {
-		val := api.FromBinary(bits[i : i+bitsPerVar]...)
-		vals = append(vals, val)
-	}
-
-	slices.Reverse[[]frontend.Variable](vals)
-	return vals
 }
 
 func (id LinkageID) ToBytes(api frontend.API) ([]uints.U8, error) {
