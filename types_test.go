@@ -41,9 +41,9 @@ func TestLinkageID(t *testing.T) {
 		FromBytes: PlaceholderLinkageID(2, 128),
 		Bytes:     idBytes,
 	}
-	idFromBytes := LinkageIDFromBytes(idBytes, 128) // from bytes
+
 	witness := IDCircuit{
-		FromBytes: idFromBytes,
+		FromBytes: LinkageIDFromBytes(idBytes, 128), // from bytes
 	}
 
 	err = test.IsSolved(&circuit, &witness, ecc.BN254.ScalarField())

@@ -51,13 +51,13 @@ func LinkageIDFromU8s(api frontend.API, data []uints.U8, bitsPerVar int) Linkage
 	bits := make([]frontend.Variable, n*8)
 
 	for i := 0; i < n; i++ {
-		bs := api.ToBinary(data[i].Val, 8)
-		copy(bits[(n-1-i)*8:(n-i)*8], bs) // reverse order in u8s
+		bs := api.ToBinary(data[n-1-i].Val, 8) // reverse order in u8s
+		copy(bits[i*8:(i+1)*8], bs)
 	}
 
 	vals := make([]frontend.Variable, 0)
-	for i := len(bits); i > 0; i -= bitsPerVar {
-		val := api.FromBinary(bits[i-bitsPerVar : i]...) // reverse order in vars
+	for i := len(bits); i > 0; i -= bitsPerVar { // reverse order in vars
+		val := api.FromBinary(bits[i-bitsPerVar : i]...)
 		vals = append(vals, val)
 	}
 
@@ -71,13 +71,13 @@ func (id LinkageID) ToU8s(api frontend.API) []uints.U8 {
 	n := len(id.Vals)
 	bits := make([]frontend.Variable, n*id.BitsPerVar)
 	for i := 0; i < n; i++ {
-		bs := api.ToBinary(id.Vals[i], id.BitsPerVar)
-		copy(bits[(n-1-i)*id.BitsPerVar:(n-i)*id.BitsPerVar], bs) // reverse order in vars
+		bs := api.ToBinary(id.Vals[n-1-i], id.BitsPerVar) // reverse order in vars
+		copy(bits[i*id.BitsPerVar:(i+1)*id.BitsPerVar], bs)
 	}
 
 	ret := make([]uints.U8, 0)
-	for i := len(bits); i > 0; i -= 8 {
-		u8 := api.FromBinary(bits[i-8 : i]...) // reverse order in u8s
+	for i := len(bits); i > 0; i -= 8 { // reverse order in u8s
+		u8 := api.FromBinary(bits[i-8 : i]...)
 		ret = append(ret, uints.U8{Val: u8})
 	}
 
