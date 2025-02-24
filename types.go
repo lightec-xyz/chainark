@@ -1,13 +1,11 @@
 package chainark
 
 import (
-	"math"
-	"slices"
-
 	common_utils "github.com/lightec-xyz/common/utils"
 
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/math/bits"
+	// "github.com/consensys/gnark/std/math/bits"
+
 	"github.com/consensys/gnark/std/math/uints"
 )
 
@@ -54,7 +52,7 @@ func LinkageIDFromU8s(api frontend.API, data []uints.U8, bitsPerVar int) Linkage
 
 	for i := 0; i < n; i++ {
 		bs := api.ToBinary(data[i].Val, 8)
-		copy(bits[(n-1-i)*8:(n-i)*8], bs) // reverse order in bytes
+		copy(bits[(n-1-i)*8:(n-i)*8], bs) // reverse order in u8s
 	}
 
 	vals := make([]frontend.Variable, 0)
@@ -69,58 +67,18 @@ func LinkageIDFromU8s(api frontend.API, data []uints.U8, bitsPerVar int) Linkage
 	}
 }
 
-func (id LinkageID) ToBytes(api frontend.API) ([]uints.U8, error) {
-	vals := make([]frontend.Variable, len(id.Vals))
-	copy(vals, id.Vals)
-	slices.Reverse[[]frontend.Variable](vals)
-
-	return ValsToU8s(api, vals, id.BitsPerVar)
-}
-
-func ValsToU8s(api frontend.API, vals []frontend.Variable, bitsPerVar int) ([]uints.U8, error) {
-	uapi, err := uints.New[uints.U32](api)
-	if err != nil {
-		return nil, err
+func (id LinkageID) ToU8s(api frontend.API) []uints.U8 {
+	n := len(id.Vals)
+	bits := make([]frontend.Variable, n*id.BitsPerVar)
+	for i := 0; i < n; i++ {
+		bs := api.ToBinary(id.Vals[i], id.BitsPerVar)
+		copy(bits[(n-1-i)*id.BitsPerVar:(n-i)*id.BitsPerVar], bs) // reverse order in vars
 	}
 
-	bytesPerVar := bitsPerVar / 8
-	ret := make([]uints.U8, bytesPerVar*len(vals))
-	for i := 0; i < len(vals); i++ {
-		bytes := byteArrayValueOf(api, uapi, vals[i], bytesPerVar)
-		begin := i * bytesPerVar
-		end := begin + bytesPerVar
-		copy(ret[begin:end], bytes)
-	}
-
-	return ret, nil
-}
-
-// Convert any varialbe to bits first then to U8 array
-// Note that if expectedLen is shorter than actual value, the converted value is *not*
-// equal to the original value!
-// TODO optimization
-func byteArrayValueOf[T uints.U32 | uints.U64](api frontend.API, bf *uints.BinaryField[T], a frontend.Variable, expectedLen ...int) []uints.U8 {
-	var opt bits.BaseConversionOption
-	var bs []frontend.Variable
-	if len(expectedLen) == 1 {
-		opt = bits.WithNbDigits(expectedLen[0] * 8)
-		bs = bits.ToBinary(api, a, opt)
-	} else {
-		bs = bits.ToBinary(api, a)
-	}
-
-	lenBits := len(bs)
-	lenBytes := int(math.Ceil(float64(lenBits) / 8.0))
-
-	ret := make([]uints.U8, lenBytes)
-	for i := 0; i < lenBytes; i++ {
-		b := bs[i*8]
-		for j := 1; j < 8 && i*8+j < lenBits; j++ {
-			v := bs[i*8+j]
-			v = api.Mul(v, 1<<j)
-			b = api.Add(b, v)
-		}
-		ret[i] = bf.ByteValueOf(b)
+	ret := make([]uints.U8, 0)
+	for i := len(bits); i > 0; i -= 8 {
+		u8 := api.FromBinary(bits[i-8 : i]...) // reverse order in u8s
+		ret = append(ret, uints.U8{Val: u8})
 	}
 
 	return ret
