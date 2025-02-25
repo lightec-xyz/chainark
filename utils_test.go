@@ -1,78 +1,65 @@
 package chainark
 
 import (
-	"math/big"
+	"encoding/hex"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
 	"github.com/consensys/gnark/std/math/emulated"
+	"github.com/consensys/gnark/std/math/emulated/emparams"
 	"github.com/consensys/gnark/test"
 )
 
 type idTestCircuit struct {
-	Eles     [2]emulated.Element[sw_bn254.ScalarField]
-	Id       LinkageID
-	Expected frontend.Variable
+	Id LinkageID
+	id []byte
 }
 
 func (c *idTestCircuit) Define(api frontend.API) error {
-	t := TestIDWitness[sw_bn254.ScalarField](api, c.Id, c.Eles[:], 128)
-	api.AssertIsEqual(t, c.Expected)
+	api.AssertIsEqual(c.Id.Vals[0], c.id[:16])
+	api.AssertIsEqual(c.Id.Vals[1], c.id[16:])
+
+	field, err := emulated.NewField[sw_bn254.ScalarField](api)
+	if err != nil {
+		return err
+	}
+
+	idEles := [2]emulated.Element[emparams.BN254Fr]{
+		newElementFromU128(field, api, c.id[:16]),
+		newElementFromU128(field, api, c.id[16:]),
+	}
+
+	AssertIDWitness[sw_bn254.ScalarField](api, c.Id, idEles[:], 128)
+
+	id := RetrieveIDFromElements(api, idEles[:], 128)
+	id.AssertIsEqual(api, c.Id)
 
 	return nil
 }
 
+func newElementFromU128(field *emulated.Field[emparams.BN254Fr], api frontend.API, v []byte) emulated.Element[emparams.BN254Fr] {
+	bits := api.ToBinary(v, 128)
+	rs := field.FromBits(bits...)
+	return *rs
+}
+
 func TestIdVSWitness(t *testing.T) {
-	limbs1 := [4]uint64{0x012345, 0x6789ab, 0, 0}
-	limbs2 := [4]uint64{0xaa, 0xbb, 0, 0}
-	ele1 := emulated.Element[sw_bn254.ScalarField]{
-		Limbs: []frontend.Variable{
-			frontend.Variable(limbs1[0]),
-			frontend.Variable(limbs1[1]),
-			frontend.Variable(limbs1[2]),
-			frontend.Variable(limbs1[3]),
-		},
-	}
-	ele2 := emulated.Element[sw_bn254.ScalarField]{
-		Limbs: []frontend.Variable{
-			frontend.Variable(limbs2[0]),
-			frontend.Variable(limbs2[1]),
-			frontend.Variable(limbs2[2]),
-			frontend.Variable(limbs2[3]),
-		},
-	}
-	eles := [2]emulated.Element[sw_bn254.ScalarField]{ele1, ele2}
-
-	bi1, ok := big.NewInt(0).SetString("6789ab0000000000012345", 16)
-	if !ok {
-		panic("bi1")
-	}
-	bi2, ok := big.NewInt(0).SetString("bb00000000000000aa", 16)
-	if !ok {
-		panic("bi2")
-	}
-	id := LinkageID{Vals: []frontend.Variable{frontend.Variable(bi1), frontend.Variable(bi2)}, BitsPerVar: 128}
-
-	circuit := &idTestCircuit{
-		Id: PlaceholderLinkageID(2, 128),
-	}
-	assignment := &idTestCircuit{
-		Eles:     eles,
-		Id:       id,
-		Expected: 1,
-	}
-	err := test.IsSolved(circuit, assignment, ecc.BN254.ScalarField())
 	assert := test.NewAssert(t)
+
+	idBytes, err := hex.DecodeString("18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f")
 	assert.NoError(err)
 
-	eles[0].Limbs[1] = frontend.Variable(100)
-	assignment2 := &idTestCircuit{
-		Eles:     eles,
-		Id:       id,
-		Expected: 0,
+	circuit := &IDCircuit{
+		FromBytes: PlaceholderLinkageID(2, 128),
+		Bytes:     idBytes,
 	}
-	err = test.IsSolved(circuit, assignment2, ecc.BN254.ScalarField())
+
+	assignment := &IDCircuit{
+		FromBytes: LinkageIDFromBytes(idBytes, 128), // from bytes
+	}
+
+	err = test.IsSolved(circuit, assignment, ecc.BN254.ScalarField())
 	assert.NoError(err)
 }
