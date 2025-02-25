@@ -27,8 +27,8 @@ func (c *idTestCircuit) Define(api frontend.API) error {
 	}
 
 	idEles := [2]emulated.Element[emparams.BN254Fr]{
-		newElementFromU128(field, api, c.id[:16]),
-		newElementFromU128(field, api, c.id[16:]),
+		newElement(field, api, c.id[:16]),
+		newElement(field, api, c.id[16:]),
 	}
 
 	AssertIDWitness[sw_bn254.ScalarField](api, c.Id, idEles[:], 128)
@@ -39,7 +39,7 @@ func (c *idTestCircuit) Define(api frontend.API) error {
 	return nil
 }
 
-func newElementFromU128(field *emulated.Field[emparams.BN254Fr], api frontend.API, v []byte) emulated.Element[emparams.BN254Fr] {
+func newElement(field *emulated.Field[emparams.BN254Fr], api frontend.API, v []byte) emulated.Element[emparams.BN254Fr] {
 	bits := api.ToBinary(v)
 	rs := field.FromBits(bits...)
 	return *rs

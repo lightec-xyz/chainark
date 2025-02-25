@@ -20,8 +20,12 @@ func PlaceholderLinkageID(nbEles, bitsPerVar int) LinkageID {
 }
 
 func (id LinkageID) AssertIsEqual(api frontend.API, other LinkageID) {
-	api.AssertIsEqual(id.BitsPerVar, other.BitsPerVar)
-	api.AssertIsEqual(len(id.Vals), len(other.Vals))
+	if id.BitsPerVar != other.BitsPerVar {
+		panic("BitsPerVar not equal")
+	}
+	if len(id.Vals) != len(other.Vals) {
+		panic("Vals count not eual")
+	}
 
 	for i := 0; i < len(id.Vals); i++ {
 		api.AssertIsEqual(id.Vals[i], other.Vals[i])
