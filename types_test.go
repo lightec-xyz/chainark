@@ -33,8 +33,7 @@ func (c *IDCircuit) Define(api frontend.API) error {
 func TestLinkageID(t *testing.T) {
 	assert := test.NewAssert(t)
 
-	idHex := "18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f"
-	idBytes, err := hex.DecodeString(idHex)
+	idBytes, err := hex.DecodeString("18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f")
 	assert.NoError(err)
 
 	circuit := IDCircuit{

@@ -1,12 +1,10 @@
 package chainark
 
 import (
-	common_utils "github.com/lightec-xyz/common/utils"
-
 	"github.com/consensys/gnark/frontend"
-	// "github.com/consensys/gnark/std/math/bits"
-
 	"github.com/consensys/gnark/std/math/uints"
+
+	common_utils "github.com/lightec-xyz/common/utils"
 )
 
 type LinkageID struct {
