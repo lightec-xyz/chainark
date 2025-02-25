@@ -40,7 +40,7 @@ func (c *idTestCircuit) Define(api frontend.API) error {
 }
 
 func newElementFromU128(field *emulated.Field[emparams.BN254Fr], api frontend.API, v []byte) emulated.Element[emparams.BN254Fr] {
-	bits := api.ToBinary(v, 128)
+	bits := api.ToBinary(v)
 	rs := field.FromBits(bits...)
 	return *rs
 }
@@ -51,13 +51,13 @@ func TestIdVSWitness(t *testing.T) {
 	idBytes, err := hex.DecodeString("18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f")
 	assert.NoError(err)
 
-	circuit := &IDCircuit{
-		FromBytes: PlaceholderLinkageID(2, 128),
-		Bytes:     idBytes,
+	circuit := &idTestCircuit{
+		Id: PlaceholderLinkageID(2, 128),
+		id: idBytes,
 	}
 
-	assignment := &IDCircuit{
-		FromBytes: LinkageIDFromBytes(idBytes, 128), // from bytes
+	assignment := &idTestCircuit{
+		Id: LinkageIDFromBytes(idBytes, 128), // from bytes
 	}
 
 	err = test.IsSolved(circuit, assignment, ecc.BN254.ScalarField())
