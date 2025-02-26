@@ -22,10 +22,7 @@ func (c *IDCircuit) Define(api frontend.API) error {
 	t := fromU8s.IsEqual(api, c.FromBytes)
 	api.AssertIsEqual(t, 1)
 
-	u8s, err := fromU8s.ToBytes(api) // to U8s
-	if err != nil {
-		return err
-	}
+	u8s := fromU8s.ToU8s(api) // to U8s
 	for i := 0; i < 32; i++ {
 		api.AssertIsEqual(u8s[i].Val, c.Bytes[i])
 	}
@@ -35,17 +32,17 @@ func (c *IDCircuit) Define(api frontend.API) error {
 
 func TestLinkageID(t *testing.T) {
 	assert := test.NewAssert(t)
-	idHex := "18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f"
-	idBytes, err := hex.DecodeString(idHex)
+
+	idBytes, err := hex.DecodeString("18c4c25dc847bbc76fd3ca67fc4c2028dee5263fddcf01de3faddc20f0462d8f")
 	assert.NoError(err)
 
 	circuit := IDCircuit{
 		FromBytes: PlaceholderLinkageID(2, 128),
 		Bytes:     idBytes,
 	}
-	idFromBytes := LinkageIDFromBytes(idBytes, 128) // from bytes
+
 	witness := IDCircuit{
-		FromBytes: idFromBytes,
+		FromBytes: LinkageIDFromBytes(idBytes, 128), // from bytes
 	}
 
 	err = test.IsSolved(&circuit, &witness, ecc.BN254.ScalarField())

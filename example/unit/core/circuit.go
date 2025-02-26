@@ -70,10 +70,7 @@ func (c *IteratedHash) GetEndID() chainark.LinkageID {
 }
 
 func (c *IteratedHash) Define(api frontend.API) error {
-	value, err := c.BeginID.ToBytes(api)
-	if err != nil {
-		return err
-	}
+	value := c.BeginID.ToU8s(api)
 
 	for i := 0; i < c.nbIter; i++ {
 		s256, err := sha256.New(api)

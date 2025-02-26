@@ -4,6 +4,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/recursion/plonk"
+
 	common_utils "github.com/lightec-xyz/common/utils"
 )
 
@@ -35,4 +36,15 @@ func GetPlaceholderFp() common_utils.FingerPrintBytes {
 		fp[i] = byte(i)
 	}
 	return common_utils.FingerPrintBytes(fp)
+}
+
+func RetrieveIDFromElements[FR emulated.FieldParams](
+	api frontend.API, witnessValues []emulated.Element[FR], bitsPerVar uint,
+) LinkageID {
+	rs := common_utils.RetrieveVarsFromElements(api, witnessValues, bitsPerVar)
+
+	return LinkageID{
+		Vals:       rs,
+		BitsPerVar: int(bitsPerVar),
+	}
 }
