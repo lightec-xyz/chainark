@@ -33,17 +33,18 @@ func (c *Verifier[FR, G1El, G2El, GtEl]) Define(api frontend.API) error {
 		return err
 	}
 
+	common_utils.AssertFpInSet[FR](api, vkeyFp, c.VkeyFpsBytes)
+
 	vkeyFps := make([]common_utils.FingerPrint[FR], len(c.VkeyFpsBytes))
 	for i := 0; i < len(c.VkeyFpsBytes); i++ {
 		vkeyFps[i] = common_utils.FingerPrintFromBytes[FR](c.VkeyFpsBytes[i])
 	}
-	recursiveFpTest := common_utils.TestFpInFpSet[FR](api, vkeyFp, vkeyFps)
 
 	initialOffset := c.NbIdVars * 2
 	nbFpVars := c.NbFpVars
 
 	setTest := TestRecursiveFps[FR](api, c.Witness, vkeyFps, initialOffset, nbFpVars, c.NbSelfFps)
-	api.AssertIsEqual(recursiveFpTest, setTest)
+	api.AssertIsEqual(1, setTest)
 
 	verifier, err := plonk.NewVerifier[FR, G1El, G2El, GtEl](api)
 	if err != nil {
