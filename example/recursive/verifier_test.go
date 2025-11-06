@@ -22,11 +22,11 @@ func Test_Circuit(t *testing.T) {
 
 	recursiveVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
 	assert.NoError(err)
-	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](recursiveVk)
 	assert.NoError(err)
 	hybridVk, err := operations.ReadVk(filepath.Join(dataDir, common.HybridVkFile))
 	assert.NoError(err)
-	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](hybridVk)
+	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](hybridVk)
 	assert.NoError(err)
 	hybridCcs, err := operations.ReadCcs(filepath.Join(dataDir, common.RecursiveCcsFile))
 	assert.NoError(err)

@@ -26,7 +26,7 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 		vk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(n)))
 		assert.NoError(err)
 
-		fp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](vk)
+		fp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](vk)
 		assert.NoError(err)
 		unitVkFps = append(unitVkFps, common_utils.FingerPrintBytes(fp))
 	}
@@ -34,7 +34,7 @@ func TestRecursive_0_12_Simulated(t *testing.T) {
 	recursiveVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
 	assert.NoError(err)
 
-	recursiveVkFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	recursiveVkFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](recursiveVk)
 	assert.NoError(err)
 
 	recursiveVkFp := common_utils.FingerPrintFromBytes[sw_bn254.ScalarField](recursiveVkFpBytes)
@@ -115,7 +115,7 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 		vk, err := operations.ReadVk(filepath.Join(dataDir, utils.UnitVkFile(n)))
 		assert.NoError(err)
 
-		fp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](vk)
+		fp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](vk)
 		assert.NoError(err)
 		unitVkFps = append(unitVkFps, common_utils.FingerPrintBytes(fp))
 	}
@@ -123,7 +123,7 @@ func TestRecursive_0_14_Simulated(t *testing.T) {
 	recursiveVk, err := operations.ReadVk(filepath.Join(dataDir, common.RecursiveVkFile))
 	assert.NoError(err)
 
-	recursiveVkFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	recursiveVkFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](recursiveVk)
 	assert.NoError(err)
 
 	recursiveVkFp := common_utils.FingerPrintFromBytes[sw_bn254.ScalarField](recursiveVkFpBytes)

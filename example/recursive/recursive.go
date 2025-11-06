@@ -78,7 +78,7 @@ func setup(extra int) {
 			panic(err)
 		}
 
-		fp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](vk)
+		fp, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](vk)
 		if err != nil {
 			panic(err)
 		}
@@ -157,11 +157,11 @@ func setup(extra int) {
 	}
 	fmt.Println("saved hybrid ccs, pk, vk")
 
-	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](recursiveVk)
 	if err != nil {
 		panic(err)
 	}
-	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](hybridVk)
+	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](hybridVk)
 	if err != nil {
 		panic(err)
 	}
@@ -307,7 +307,7 @@ func prove(args []string) {
 	if err != nil {
 		panic(err)
 	}
-	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](recursiveVk)
 	if err != nil {
 		panic(err)
 	}
@@ -317,7 +317,7 @@ func prove(args []string) {
 	if err != nil {
 		panic(err)
 	}
-	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](hybridVk)
+	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](hybridVk)
 	if err != nil {
 		panic(err)
 	}
@@ -479,7 +479,7 @@ func hybrid(args []string) {
 	if err != nil {
 		panic(err)
 	}
-	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](recursiveVk)
+	recursiveFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](recursiveVk)
 	if err != nil {
 		panic(err)
 	}
@@ -489,7 +489,7 @@ func hybrid(args []string) {
 	if err != nil {
 		panic(err)
 	}
-	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](hybridVk)
+	hybridFpBytes, err := common_utils.UnsafeFingerPrintFromVk[sw_bn254.ScalarField](hybridVk)
 	if err != nil {
 		panic(err)
 	}
